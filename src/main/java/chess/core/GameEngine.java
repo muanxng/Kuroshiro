@@ -61,6 +61,7 @@ public class GameEngine {
 
     private boolean wouldLeaveKingInCheck(Piece piece, Position destination) {
         Position originalPos = piece.getPosition();
+        boolean originalHasMoved = piece.hasMoved();
         Piece captured = board.getPieceAt(destination);
 
         board.removePiece(originalPos);
@@ -72,6 +73,7 @@ public class GameEngine {
 
         board.removePiece(destination);
         piece.setPosition(originalPos);
+        piece.resetHasMoved(originalHasMoved);
         board.placePiece(piece);
         if (captured != null) board.placePiece(captured);
 

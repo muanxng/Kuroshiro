@@ -157,6 +157,7 @@ public class ChessApp extends Application {
             case "B": return w ? "♗" : "♝";
             case "N": return w ? "♘" : "♞";
             case "P": return w ? "♙" : "♟";
+            case "X": return w ? "🨄" : "🨄";
             default:  return w ? piece.getSymbol().toUpperCase() : piece.getSymbol().toLowerCase();
         }
     }
