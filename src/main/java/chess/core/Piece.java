@@ -67,6 +67,10 @@ public abstract class Piece implements Moveable {
         return moves;
     }
 
+    public void resetHasMoved(boolean value) {
+        this.hasMoved = value;
+    }
+
     @Override
     public abstract List<Position> getLegalMoves(Board board);
 
