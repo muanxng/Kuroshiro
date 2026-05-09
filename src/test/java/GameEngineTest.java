@@ -73,7 +73,7 @@ public class GameEngineTest {
         board.placePiece(new Mage(Color.WHITE, new Position(4,4)));
         board.placePiece(new Warrior(Color.BLACK, new Position(4,6)));
         board.placePiece(new Warrior(Color.WHITE, new Position(0,0))); // keep white alive
-        MoveResult result = engine.shootMagic(new Position(4,4), new Position(4,6));
+        MoveResult result = engine.shoot(new Position(4,4), new Position(4,6));
         assertTrue(result.isSuccess());
         assertEquals(Color.BLACK, engine.getCurrentTurn());
     }
@@ -83,7 +83,7 @@ public class GameEngineTest {
         board.placePiece(new Archmage(Color.WHITE, new Position(7,4)));
         board.placePiece(new Warrior(Color.BLACK, new Position(0,4)));
         board.placePiece(new Warrior(Color.WHITE, new Position(0,0)));
-        MoveResult result = engine.archmageShoot(new Position(7,4), new Position(0,4));
+        MoveResult result = engine.shoot(new Position(7,4), new Position(0,4));
         assertTrue(result.isSuccess());
         assertEquals(Color.BLACK, engine.getCurrentTurn());
     }
@@ -93,7 +93,7 @@ public class GameEngineTest {
         board.placePiece(new Archer(Color.WHITE, new Position(4,4)));
         board.placePiece(new Warrior(Color.BLACK, new Position(2,2)));
         board.placePiece(new Warrior(Color.WHITE, new Position(0,0)));
-        MoveResult result = engine.archerShoot(new Position(4,4), new Position(2,2));
+        MoveResult result = engine.shoot(new Position(4,4), new Position(2,2));
         assertTrue(result.isSuccess());
         assertEquals(Color.BLACK, engine.getCurrentTurn());
     }

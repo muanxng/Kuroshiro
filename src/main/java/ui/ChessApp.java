@@ -475,15 +475,15 @@ public class ChessApp extends Application {
         Piece piece = engine.getBoard().getPieceAt(from);
 
         if (piece instanceof pieces.Mage) {
-            return engine.shootMagic(from, target);
+            return engine.shoot(from, target);
         }
 
         if (piece instanceof pieces.Archmage) {
-            return engine.archmageShoot(from, target);
+            return engine.shoot(from, target);
         }
 
         if (piece instanceof pieces.Archer) {
-            return engine.archerShoot(from, target);
+            return engine.shoot(from, target);
         }
 
         return MoveResult.failure(MoveResult.Status.INVALID_MOVE);

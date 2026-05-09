@@ -3,7 +3,7 @@ package pieces;
 import core.*;
 import java.util.*;
 
-public class Archmage extends Piece {
+public class Archmage extends Piece implements Shootable{
 
     private static final int[][] MOVE_DIRS = {
         {-1,-1},{-1,0},{-1,1},
@@ -53,13 +53,15 @@ public class Archmage extends Piece {
         return targets;
     }
 
-    public Piece shootMagic(Position target, Board board) {
+    public Piece shoot(Position target, Board board) {
         if (!canUseMagic()) return null;
         if (!getMagicTargets(board).contains(target)) return null;
-
         Piece captured = board.getPieceAt(target);
-        board.removePiece(target);
         magicCooldown = 2;
+        if (captured instanceof Warrior warrior) {
+            if (warrior.takeDamage()) board.removePiece(target);
+        }
+        else board.removePiece(target);
         return captured;
     }
 

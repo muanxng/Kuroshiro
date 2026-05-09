@@ -3,7 +3,9 @@ import core.Color;
 import core.Position;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import pieces.Archer;
 import pieces.Archmage;
+import pieces.Assassin;
 import pieces.Warrior;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -49,7 +51,7 @@ public class ArchmageTest {
         board.placePiece(a);
         board.placePiece(enemy);
         assertTrue(a.canUseMagic());
-        a.shootMagic(new Position(4,6), board);
+        a.shoot(new Position(4,6), board);
         assertFalse(a.canUseMagic());
         assertEquals(2, a.getMagicCooldown());
     }
@@ -60,7 +62,7 @@ public class ArchmageTest {
         Warrior enemy = new Warrior(Color.BLACK, new Position(4,6));
         board.placePiece(a);
         board.placePiece(enemy);
-        a.shootMagic(new Position(4,6), board);
+        a.shoot(new Position(4,6), board);
         a.decrementCooldown();
         assertEquals(1, a.getMagicCooldown());
         a.decrementCooldown();
@@ -76,17 +78,32 @@ public class ArchmageTest {
         Warrior enemy2 = new Warrior(Color.BLACK, new Position(4,7));
         board.placePiece(enemy1);
         board.placePiece(enemy2);
-        a.shootMagic(new Position(4,6), board);
-        assertNull(a.shootMagic(new Position(4,7), board));
+        a.shoot(new Position(4,6), board);
+        assertNull(a.shoot(new Position(4,7), board));
     }
 
     @Test
-    void shootEnemyTest() {
-        Archmage a = new Archmage(Color.WHITE, new Position(4,4));
-        Warrior enemy = new Warrior(Color.BLACK, new Position(4,6));
-        board.placePiece(a);
-        board.placePiece(enemy);
-        a.shootMagic(new Position(4,6), board);
-        assertNull(board.getPieceAt(new Position(4,6)));
+    void testShootWarrior() {
+        Archmage archmage = new Archmage(Color.WHITE, new Position(4, 4));
+        Warrior warrior = new Warrior(Color.BLACK, new Position(4, 6));
+        board.placePiece(archmage);
+        board.placePiece(warrior);
+        archmage.shoot(new Position(4, 6), board);
+        assertNotNull(board.getPieceAt(new Position(4, 6)));
+        assertEquals(1, warrior.getLives());
+        archmage.decrementCooldown();
+        archmage.decrementCooldown();
+        archmage.shoot(new Position(4, 6), board);
+        assertNull(board.getPieceAt(new Position(4, 6)));
+    }
+
+    @Test
+    void pieceRemovedFromBoardTest() {
+        Archmage archmage = new Archmage(Color.WHITE, new Position(4, 4));
+        Assassin assassin = new Assassin(Color.BLACK, new Position(4, 6));
+        board.placePiece(archmage);
+        board.placePiece(assassin);
+        archmage.shoot(new Position(4, 6), board);
+        assertNull(board.getPieceAt(new Position(4, 6)));
     }
 }

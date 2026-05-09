@@ -54,51 +54,31 @@ public class GameEngine {
         return finishTurn(captured);
     }
 
-    public MoveResult shootMagic(Position magePos, Position target) {
-        if (gameOver) return MoveResult.failure(MoveResult.Status.GAME_OVER);
+    public MoveResult shoot(Position shooterPos, Position target) {
 
-        Piece piece = board.getPieceAt(magePos);
-        if (!(piece instanceof Mage)) return MoveResult.failure(MoveResult.Status.NO_PIECE_SELECTED);
-        if (piece.getColor() != currentTurn) return MoveResult.failure(MoveResult.Status.WRONG_TURN);
-
-        Mage mage = (Mage) piece;
-        Piece captured = mage.shootMagic(target, board);
-        if (captured == null) return MoveResult.failure(MoveResult.Status.INVALID_MOVE);
-
-        decrementCooldowns();
-        totalMoves++;
-        return finishTurn(captured);
-    }
-
-    public MoveResult archmageShoot(Position shooterPos, Position target) {
-        if (gameOver) return MoveResult.failure(MoveResult.Status.GAME_OVER);
+        if (gameOver) {
+            return MoveResult.failure(MoveResult.Status.GAME_OVER);
+        }
 
         Piece piece = board.getPieceAt(shooterPos);
-        if (!(piece instanceof Archmage)) return MoveResult.failure(MoveResult.Status.NO_PIECE_SELECTED);
-        if (piece.getColor() != currentTurn) return MoveResult.failure(MoveResult.Status.WRONG_TURN);
 
-        Archmage archmage = (Archmage) piece;
-        Piece captured = archmage.shootMagic(target, board);
-        if (captured == null) return MoveResult.failure(MoveResult.Status.INVALID_MOVE);
+        if (!(piece instanceof Shootable shooter)) {
+            return MoveResult.failure(MoveResult.Status.NO_PIECE_SELECTED);
+        }
 
-        decrementCooldowns();
-        totalMoves++;
-        return finishTurn(captured);
-    }
+        if (piece.getColor() != currentTurn) {
+            return MoveResult.failure(MoveResult.Status.WRONG_TURN);
+        }
 
-    public MoveResult archerShoot(Position shooterPos, Position target) {
-        if (gameOver) return MoveResult.failure(MoveResult.Status.GAME_OVER);
+        Piece captured = shooter.shoot(target, board);
 
-        Piece piece = board.getPieceAt(shooterPos);
-        if (!(piece instanceof Archer)) return MoveResult.failure(MoveResult.Status.NO_PIECE_SELECTED);
-        if (piece.getColor() != currentTurn) return MoveResult.failure(MoveResult.Status.WRONG_TURN);
-
-        Archer archer = (Archer) piece;
-        Piece captured = archer.shoot(target, board);
-        if (captured == null) return MoveResult.failure(MoveResult.Status.INVALID_MOVE);
+        if (captured == null) {
+            return MoveResult.failure(MoveResult.Status.INVALID_MOVE);
+        }
 
         decrementCooldowns();
         totalMoves++;
+
         return finishTurn(captured);
     }
 
