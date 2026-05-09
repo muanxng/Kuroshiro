@@ -5,7 +5,6 @@
 ```java
 package chess.pieces;
 
-import chess.core.*;
 import java.util.*;
 
 // Example: Teleporter — jumps to any square on the board
@@ -28,7 +27,9 @@ public class Teleporter extends Piece {
     }
 
     @Override
-    public String getSymbol() { return "T"; }
+    public String getSymbol() {
+        return "T";
+    }
 }
 ```
 

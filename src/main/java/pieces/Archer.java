@@ -1,0 +1,57 @@
+package pieces;
+
+import core.*;
+import java.util.*;
+
+public class Archer extends Piece {
+
+    private static final int[][] MOVE_DIRS = {
+        {-1,-1},{-1,0},{-1,1},
+        { 0,-1},        { 0,1},
+        { 1,-1},{ 1,0},{ 1,1}
+    };
+
+    private static final int[][] SHOOT_DIRS = {
+        {-1,-1},{-1,1},{1,-1},{1,1}
+    };
+
+    private static final int SHOOT_RANGE = 3;
+
+    public Archer(Color color, Position position) { super(color, position); }
+
+    @Override
+    public List<Position> getLegalMoves(Board board) {
+        List<Position> moves = new ArrayList<>();
+        for (int[] dir : MOVE_DIRS) {
+            Position candidate = position.offset(dir[0], dir[1]);
+            if (candidate.isValid() && isEmpty(candidate, board)) moves.add(candidate);
+        }
+        return moves;
+    }
+
+    public List<Position> getShootTargets(Board board) {
+        List<Position> targets = new ArrayList<>();
+        for (int[] dir : SHOOT_DIRS) {
+            for (int i = 1; i <= SHOOT_RANGE; i++) {
+                Position current = position.offset(dir[0] * i, dir[1] * i);
+                if (!current.isValid()) break;
+                Piece target = board.getPieceAt(current);
+                if (target != null) {
+                    if (target.getColor() != this.color) targets.add(current);
+                    break; // blocked by any piece
+                }
+            }
+        }
+        return targets;
+    }
+
+    public Piece shoot(Position target, Board board) {
+        if (!getShootTargets(board).contains(target)) return null;
+        Piece captured = board.getPieceAt(target);
+        board.removePiece(target);
+        return captured;
+    }
+
+    @Override
+    public String getSymbol() { return "A"; }
+}
