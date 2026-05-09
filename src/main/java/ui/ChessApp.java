@@ -39,13 +39,13 @@ public class ChessApp extends Application {
     private final Map<String, Image> pieceImages = new HashMap<>();
 
     private final AudioClip captureSound =
-            new AudioClip(getClass().getResource("/sounds/capture_sound.wav").toExternalForm());
+            new AudioClip(getClass().getResource("/sounds/capture_sound.mp3").toExternalForm());
 
     private final AudioClip moveSound =
-            new AudioClip(getClass().getResource("/sounds/move_sound.wav").toExternalForm());
+            new AudioClip(getClass().getResource("/sounds/move_sound.mp3").toExternalForm());
 
     private final AudioClip gameOverSound =
-            new AudioClip(getClass().getResource("/sounds/game_over_sound.wav").toExternalForm());
+            new AudioClip(getClass().getResource("/sounds/game_over_sound.mp3").toExternalForm());
 
     private GameEngine engine;
     private Canvas canvas;
