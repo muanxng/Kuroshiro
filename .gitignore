@@ -17,3 +17,9 @@ Thumbs.db
 desktop.ini
 workspace.xml
 compiler.xml
+/build/classes/
+/build/resources/
+/build/generated/
+/build/reports/
+/build/test-results/
+/build/tmp/
