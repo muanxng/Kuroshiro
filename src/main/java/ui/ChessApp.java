@@ -9,6 +9,7 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -26,9 +27,10 @@ import java.util.Map;
 
 public class ChessApp extends Application {
 
-    private static final int TILE = 80;
     private static final int BOARD_SIZE = 8;
-    private static final int CANVAS_SIZE = TILE * BOARD_SIZE;
+
+    // Dynamic tile size updated on resize
+    private double TILE = 80;
 
     private static final Color LIGHT = Color.rgb(240, 217, 181);
     private static final Color DARK = Color.rgb(181, 136, 99);
@@ -47,6 +49,8 @@ public class ChessApp extends Application {
     private final AudioClip gameOverSound =
             new AudioClip(getClass().getResource("/sounds/game_over_sound.mp3").toExternalForm());
 
+    private Button newGameButton;
+
     private GameEngine engine;
     private Canvas canvas;
     private Label statusLabel;
@@ -55,54 +59,71 @@ public class ChessApp extends Application {
     private List<Position> legalMoves;
     private List<Position> shootTargets;
 
+    private VBox root;
+
     @Override
     public void start(Stage stage) {
         engine = new GameEngine(GameSetup.createStandardBoard());
 
-        canvas = new Canvas(CANVAS_SIZE, CANVAS_SIZE);
-        canvas.setOnMouseClicked(event ->
-                handleClick(
-                        (int) (event.getX() / TILE),
-                        (int) (event.getY() / TILE)
-                )
-        );
+        canvas = new Canvas(TILE * BOARD_SIZE, TILE * BOARD_SIZE);
+        canvas.setOnMouseClicked(event -> handleClick((int) (event.getX() / TILE), (int) (event.getY() / TILE)));
 
         statusLabel = createStatusLabel();
 
-        VBox root = new VBox(
-                createColumnLabels(),
-                createBoardRow(),
-                statusLabel
-        );
+        newGameButton = new Button("New Game");
+        newGameButton.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        newGameButton.setVisible(false);
+        newGameButton.setOnAction(e -> resetGame());
 
+        root = new VBox(canvas, statusLabel, newGameButton);
         root.setAlignment(Pos.CENTER);
-        root.setSpacing(0);
+        root.setSpacing(5);
         root.setPadding(new Insets(16));
         root.setStyle("-fx-background-color: #312e2b;");
 
         loadImages();
-        draw();
 
+        Scene scene = new Scene(root);
         stage.setTitle("Chess");
-        stage.setScene(new Scene(root));
-        stage.setResizable(false);
+        stage.setScene(scene);
+        stage.setFullScreen(true);
+        stage.setFullScreenExitHint("Press Escape to exit fullscreen");
+
+        scene.widthProperty().addListener((obs, oldVal, newVal) -> resizeBoard(scene));
+        scene.heightProperty().addListener((obs, oldVal, newVal) -> resizeBoard(scene));
+
         stage.show();
+        resizeBoard(scene);
     }
+
+    // ── Resize ───────────────────────────────────────────────────────────────
+
+    private void resizeBoard(Scene scene) {
+        double available = Math.min(
+                scene.getWidth() - 40,
+                scene.getHeight() - 100
+        );
+        TILE = available / BOARD_SIZE;
+
+        canvas.setWidth(TILE * BOARD_SIZE);
+        canvas.setHeight(TILE * BOARD_SIZE);
+
+        draw();
+    }
+
+    // ── Status label ─────────────────────────────────────────────────────────
 
     private Label createStatusLabel() {
         Label label = new Label("White's turn");
         label.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        label.setTextFill(Color.WHITE);
         label.setAlignment(Pos.CENTER);
         label.setMaxWidth(Double.MAX_VALUE);
         label.setPadding(new Insets(10));
         return label;
     }
 
-    private HBox createBoardRow() {
-        HBox row = new HBox(createRowLabels(), canvas);
-        row.setAlignment(Pos.CENTER);
-        return row;
-    }
+    // ── Images ───────────────────────────────────────────────────────────────
 
     private void loadImages() {
         String[] colors = {"white", "black"};
@@ -132,6 +153,8 @@ public class ChessApp extends Application {
             }
         }
     }
+
+    // ── Drawing ───────────────────────────────────────────────────────────────
 
     private void draw() {
         GraphicsContext g = canvas.getGraphicsContext2D();
@@ -171,7 +194,6 @@ public class ChessApp extends Application {
             double x,
             double y
     ) {
-
         if (position.equals(selectedPosition)) {
             g.setFill(SELECT);
             g.fillRect(x, y, TILE, TILE);
@@ -200,25 +222,21 @@ public class ChessApp extends Application {
         }
     }
 
-    private void drawCoordinates(
-            GraphicsContext g,
-            int row,
-            int col,
-            double x,
-            double y
-    ) {
+    private void drawCoordinates(GraphicsContext g, int row, int col, double x, double y) {
+        g.setFont(Font.font("Arial", FontWeight.BOLD, TILE * 0.15));
 
-        g.setFont(Font.font("Arial", 11));
-        g.setFill((row + col) % 2 == 0 ? DARK : LIGHT);
-
+        // Row numbers on the left edge of the board
         if (col == 0) {
-            g.fillText(String.valueOf(8 - row), x + 3, y + 14);
+            g.setFill(Color.rgb(200, 200, 200));
+            g.fillText(String.valueOf(8 - row), x + 4, y + TILE * 0.2);
         }
 
+        // Column letters on the bottom edge of the board
         if (row == 7) {
+            g.setFill(Color.rgb(200, 200, 200));
             g.fillText(
-                    String.valueOf((char) ('a' + col)),
-                    x + TILE - 12,
+                    String.valueOf((char)('a' + col)),
+                    x + TILE - TILE * 0.2,
                     y + TILE - 4
             );
         }
@@ -250,7 +268,6 @@ public class ChessApp extends Application {
             double x,
             double y
     ) {
-
         String symbol = piece.getSymbol().toUpperCase();
 
         g.setFont(Font.font("Arial", FontWeight.BOLD, TILE / 2));
@@ -281,9 +298,10 @@ public class ChessApp extends Application {
         );
 
         g.setLineWidth(1);
-
         g.strokeText(symbol, x + TILE / 2.0 - 8, y + TILE / 2.0 + 8);
     }
+
+    // ── Click handling ────────────────────────────────────────────────────────
 
     private void handleClick(int col, int row) {
 
@@ -318,7 +336,6 @@ public class ChessApp extends Application {
         ) {
 
             MoveResult result = shoot(selectedPosition, clicked);
-
             clearSelection();
             updateStatus(result);
 
@@ -326,11 +343,19 @@ public class ChessApp extends Application {
 
             MoveResult result =
                     engine.makeMove(selectedPosition, clicked);
-
             clearSelection();
             updateStatus(result);
         }
 
+        draw();
+    }
+
+    private void resetGame() {
+        Board board = GameSetup.createStandardBoard();
+        engine = new GameEngine(board);
+        clearSelection();
+        newGameButton.setVisible(false);
+        statusLabel.setText("White's turn");
         draw();
     }
 
@@ -353,6 +378,8 @@ public class ChessApp extends Application {
         shootTargets = null;
     }
 
+    // ── Status ────────────────────────────────────────────────────────────────
+
     private void updateStatus(MoveResult result) {
 
         if (!result.isSuccess()) {
@@ -361,91 +388,31 @@ public class ChessApp extends Application {
         }
 
         if (result.isWon()) {
-
-            if (gameOverSound != null) {
-                gameOverSound.play();
-            }
+            gameOverSound.play();
 
             core.Color winner = engine.getWinner();
+            String winnerName = winner == core.Color.WHITE ? "White" : "Black";
 
-            String winnerName =
-                    winner == core.Color.WHITE ? "White" : "Black";
-
-            statusLabel.setText(
-                    winnerName + " wins! All enemy pieces eliminated!"
-            );
-
-            showAlert(
-                    winnerName + " wins!",
-                    "All enemy pieces eliminated!"
-            );
-
+            statusLabel.setText(winnerName + " wins! All enemy pieces eliminated!");
+            newGameButton.setVisible(true);
+            showAlert(winnerName + " wins!", "All enemy pieces eliminated!");
             return;
         }
 
-        if (result.getCapturedPiece() != null && captureSound != null) {
-            captureSound.play();
-        }
+        if (result.getCapturedPiece() != null) captureSound.play();
+        else moveSound.play();
 
-        statusLabel.setText(
-                engine.getCurrentTurn()
-                        + "'s turn  |  Move: "
-                        + engine.getTotalMoves()
-        );
+        statusLabel.setText(engine.getCurrentTurn() + "'s turn  |  Move: " + engine.getTotalMoves());
     }
 
     private void showAlert(String title, String header) {
         Alert alert = new Alert(AlertType.INFORMATION);
-
         alert.setTitle(title);
         alert.setHeaderText(header);
-
         alert.show();
     }
 
-    private GridPane createColumnLabels() {
-
-        GridPane grid = new GridPane();
-
-        grid.setPadding(new Insets(0, 0, 0, 20));
-
-        for (int col = 0; col < BOARD_SIZE; col++) {
-
-            Label label =
-                    new Label(String.valueOf((char) ('a' + col)));
-
-            label.setFont(Font.font("Arial", FontWeight.BOLD, 13));
-            label.setTextFill(Color.rgb(200, 200, 200));
-            label.setMinWidth(TILE);
-            label.setAlignment(Pos.CENTER);
-
-            grid.add(label, col, 0);
-        }
-
-        return grid;
-    }
-
-    private GridPane createRowLabels() {
-
-        GridPane grid = new GridPane();
-
-        grid.setPadding(new Insets(0, 4, 0, 0));
-
-        for (int row = 0; row < BOARD_SIZE; row++) {
-
-            Label label =
-                    new Label(String.valueOf(8 - row));
-
-            label.setFont(Font.font("Arial", FontWeight.BOLD, 13));
-            label.setTextFill(Color.rgb(200, 200, 200));
-            label.setMinHeight(TILE);
-            label.setAlignment(Pos.CENTER);
-
-            grid.add(label, 0, row);
-        }
-
-        return grid;
-    }
+    // ── Shoot helpers ─────────────────────────────────────────────────────────
 
     private boolean isShootingPiece(Piece piece) {
         return piece instanceof pieces.Mage
