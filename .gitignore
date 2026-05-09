@@ -1,5 +1,4 @@
 .gradle
-build/
 gradle-app.setting
 !gradle-wrapper.jar
 !gradle-wrapper.properties
@@ -15,5 +14,11 @@ hs_err_pid*
 .DS_Store
 Thumbs.db
 desktop.ini
-.idea
-CUSTOM_PIECES.md
+workspace.xml
+compiler.xml
+/build/classes/
+/build/resources/
+/build/generated/
+/build/reports/
+/build/test-results/
+/build/tmp/
