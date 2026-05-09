@@ -10,34 +10,79 @@ public class Board {
     public Board() { grid = new Piece[8][8]; }
 
     public void placePiece(Piece piece) {
-        Position pos = piece.getPosition();
-        grid[pos.getRow()][pos.getCol()] = piece;
+        Position position = piece.getPosition();
+        grid[position.getRow()][position.getCol()] = piece;
     }
 
-    public void removePiece(Position pos) {
-        grid[pos.getRow()][pos.getCol()] = null;
+    /**
+     * Removes a piece from the board.
+     *
+     * @param position the position to clear
+     */
+    public void removePiece(Position position) {
+        grid[position.getRow()][position.getCol()] = null;
     }
 
-    public Piece getPieceAt(Position pos) {
-        if (!pos.isValid()) return null;
-        return grid[pos.getRow()][pos.getCol()];
+    /**
+     * Returns the piece located at a position.
+     *
+     * @param position the target position
+     * @return the piece at the position or null if empty
+     */
+    public Piece getPieceAt(Position position) {
+        if (!position.isValid()) {
+            return null;
+        }
+
+        return grid[position.getRow()][position.getCol()];
     }
 
-    public boolean isEmpty(Position pos) { return getPieceAt(pos) == null; }
+    /**
+     * Checks whether a board position is empty.
+     *
+     * @param position the position to check
+     * @return true if empty
+     */
+    public boolean isEmpty(Position position) {
+        return getPieceAt(position) == null;
+    }
 
+    /**
+     * Moves a piece to a new destination.
+     *
+     * @param piece the piece to move
+     * @param destination the destination position
+     * @return the captured piece if one exists, otherwise null
+     */
     public Piece movePiece(Piece piece, Position destination) {
-        Piece captured = getPieceAt(destination);
+        Piece capturedPiece = getPieceAt(destination);
+
         removePiece(piece.getPosition());
+
         piece.setPosition(destination);
+
         placePiece(piece);
-        return captured;
+
+        return capturedPiece;
     }
 
+    /**
+     * Retrieves all pieces belonging to a specific color.
+     *
+     * @param color the target color
+     * @return list of matching pieces
+     */
     public List<Piece> getPieces(Color color) {
-        List<Piece> result = new ArrayList<>();
-        for (Piece[] row : grid)
-            for (Piece p : row)
-                if (p != null && p.getColor() == color) result.add(p);
-        return result;
+        List<Piece> pieces = new ArrayList<>();
+
+        for (Piece[] row : grid) {
+            for (Piece piece : row) {
+                if (piece != null && piece.getColor() == color) {
+                    pieces.add(piece);
+                }
+            }
+        }
+
+        return pieces;
     }
 }

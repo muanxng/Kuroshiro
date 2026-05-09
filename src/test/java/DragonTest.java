@@ -8,6 +8,11 @@ import pieces.Warrior;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Test suite for the {@link Dragon} piece.
+ * Verifies continuous sliding movement in all 8 directions, capturing mechanics,
+ * and proper collision detection with blocking pieces.
+ */
 public class DragonTest {
 
     private Board board;

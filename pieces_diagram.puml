@@ -1,0 +1,89 @@
+@startuml
+class pieces.Assassin {
+- {static} int[][] DIAGONAL_DIRS
+- {static} int JUMP_RANGE
++ <<Create>> Assassin(Color,Position)
++ List<Position> getLegalMoves(Board)
++ Piece stab(Position,Board)
++ String getSymbol()
+}
+
+
+class pieces.Archer {
+- {static} int[][] MOVE_DIRS
+- {static} int[][] SHOOT_DIRS
+- {static} int SHOOT_RANGE
++ <<Create>> Archer(Color,Position)
++ List<Position> getLegalMoves(Board)
++ List<Position> getShootTargets(Board)
++ Piece shoot(Position,Board)
++ List<Position> getTargets(Board)
++ String getSymbol()
+}
+
+
+class pieces.Dragon {
+- {static} int[][] DIRS
++ <<Create>> Dragon(Color,Position)
++ List<Position> getLegalMoves(Board)
++ Piece stab(Position,Board)
++ String getSymbol()
+}
+
+
+class pieces.Archmage {
+- {static} int[][] MOVE_DIRS
+- {static} int[][] SHOOT_DIRS
+- int magicCooldown
++ <<Create>> Archmage(Color,Position)
++ List<Position> getLegalMoves(Board)
++ List<Position> getShootTargets(Board)
++ Piece shoot(Position,Board)
++ List<Position> getTargets(Board)
++ boolean canUseMagic()
++ int getMagicCooldown()
++ void decrementCooldown()
++ String getSymbol()
+}
+
+
+class pieces.Warrior {
+- int lives
++ <<Create>> Warrior(Color,Position)
++ List<Position> getLegalMoves(Board)
++ boolean takeDamage()
++ int getLives()
++ boolean isAlive()
++ Piece stab(Position,Board)
++ String getSymbol()
+}
+
+
+class pieces.Mage {
+- {static} int[][] MOVE_DIRS
+- {static} int[][] SHOOT_DIRS
+- {static} int SHOOT_RANGE
++ <<Create>> Mage(Color,Position)
++ List<Position> getLegalMoves(Board)
++ List<Position> getShootTargets(Board)
++ Piece shoot(Position,Board)
++ List<Position> getTargets(Board)
++ String getSymbol()
+}
+
+
+
+
+pieces.Stabbable <|.. pieces.Assassin
+pieces.Piece <|-- pieces.Assassin
+pieces.Shootable <|.. pieces.Archer
+pieces.Piece <|-- pieces.Archer
+pieces.Stabbable <|.. pieces.Dragon
+pieces.Piece <|-- pieces.Dragon
+pieces.Shootable <|.. pieces.Archmage
+pieces.Piece <|-- pieces.Archmage
+pieces.Stabbable <|.. pieces.Warrior
+pieces.Piece <|-- pieces.Warrior
+pieces.Shootable <|.. pieces.Mage
+pieces.Piece <|-- pieces.Mage
+@enduml

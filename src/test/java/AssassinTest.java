@@ -8,6 +8,11 @@ import pieces.Warrior;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Test suite for the {@link Assassin} piece.
+ * Verifies its diagonal leaping abilities, ensuring it can jump over obstacles
+ * and correctly capture enemy pieces upon landing.
+ */
 public class AssassinTest {
 
     private Board board;

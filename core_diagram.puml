@@ -1,0 +1,115 @@
+@startuml
+enum core.Color {
++  WHITE
++  BLACK
++ Color opposite()
+}
+
+
+class core.Position {
+- int row
+- int col
++ <<Create>> Position(int,int)
++ int getRow()
++ int getCol()
++ boolean isValid()
++ Position offset(int,int)
++ boolean equals(Object)
++ int hashCode()
++ String toString()
+}
+
+
+interface core.Stabbable {
+~ Piece stab(Position,Board)
+}
+
+abstract class core.Piece {
+# Color color
+# Position position
+# boolean hasMoved
++ <<Create>> Piece(Color,Position)
++ Color getColor()
++ Position getPosition()
++ boolean hasMoved()
++ void setPosition(Position)
+# boolean canMoveTo(Position,Board)
+# boolean isEnemy(Position,Board)
+# boolean isEmpty(Position,Board)
+# List<Position> slide(int,int,Board)
++ void resetHasMoved(boolean)
++ {abstract}List<Position> getLegalMoves(Board)
++ {abstract}String getSymbol()
++ String toString()
+}
+
+
+class core.GameEngine {
+- Board board
+- Color currentTurn
+- boolean gameOver
+- Color winner
+- int totalMoves
++ <<Create>> GameEngine(Board)
++ MoveResult makeMove(Position,Position)
++ MoveResult stab(Position,Position)
++ MoveResult shoot(Position,Position)
++ List<Position> getSafeMoves(Piece)
++ Color getCurrentTurn()
++ boolean isGameOver()
++ Color getWinner()
++ Board getBoard()
++ int getTotalMoves()
+- MoveResult finishTurn(Piece)
+- void decrementCooldowns()
+}
+
+
+interface core.Moveable {
+~ List<Position> getLegalMoves(Board)
+~ String getSymbol()
+}
+
+class core.Board {
+- Piece[][] grid
++ <<Create>> Board()
++ void placePiece(Piece)
++ void removePiece(Position)
++ Piece getPieceAt(Position)
++ boolean isEmpty(Position)
++ Piece movePiece(Piece,Position)
++ List<Piece> getPieces(Color)
+}
+
+
+interface core.Shootable {
+~ Piece shoot(Position,Board)
+~ List<Position> getTargets(Board)
+}
+
+class core.MoveResult {
+- Status status
+- Piece capturedPiece
+- boolean isWon
++ <<Create>> MoveResult(Status,Piece,boolean)
++ {static} MoveResult success(Piece,boolean)
++ {static} MoveResult failure(Status)
++ Status getStatus()
++ Piece getCapturedPiece()
++ boolean isSuccess()
++ boolean isWon()
+}
+
+
+enum core.Status {
++  SUCCESS
++  INVALID_MOVE
++  NO_PIECE_SELECTED
++  WRONG_TURN
++  GAME_OVER
+}
+
+
+
+core.Moveable <|.. core.Piece
+@enduml

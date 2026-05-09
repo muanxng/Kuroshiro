@@ -2,6 +2,11 @@ import core.Position;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Test suite for the {@link Position} data class.
+ * Verifies grid boundary validation, coordinate offset calculations,
+ * value-based equality checking, and algebraic chess notation conversion.
+ */
 public class PositionTest {
 
     @Test
