@@ -17,7 +17,7 @@ public class Assassin extends Piece implements Stabbable {
     };
 
     /** The maximum number of squares the Assassin can leap in a single move. */
-    private static final int JUMP_RANGE = 4;
+    private static final int JUMP_RANGE = 3;
 
     /**
      * Initializes a new Assassin piece.

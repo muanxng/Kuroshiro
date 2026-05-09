@@ -23,7 +23,7 @@ public class Mage extends Piece implements Shootable {
     };
 
     /** The maximum distance in squares the Mage can shoot. */
-    private static final int SHOOT_RANGE = 4;
+    private static final int SHOOT_RANGE = 3;
 
     /**
      * Initializes a new Mage piece.
