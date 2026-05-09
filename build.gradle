@@ -4,45 +4,85 @@ plugins {
     id 'org.openjfx.javafxplugin' version '0.1.0'
 }
 
-group = 'chess'
-version = '1.0'
-
-java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
-}
-
-application {
-    mainClass = 'chess.ui.ChessApp'
-}
-
-javafx {
-    version = '21'
-    modules = ['javafx.controls', 'javafx.fxml']
-}
+group = 'progmeth_2025_1'
+version = '1'
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+    implementation 'org.openjfx:javafx-controls:24.0.1'
+    implementation 'org.openjfx:javafx-fxml:24.0.1'
+    implementation 'org.openjfx:javafx-web:24.0.1'
+    implementation 'org.openjfx:javafx-graphics:24.0.1'
+    implementation 'org.openjfx:javafx-media:24.0.1'
+    implementation 'org.openjfx:javafx-swing:24.0.1'
+
+    testImplementation 'org.testfx:testfx-core:4.0.17'
+    testImplementation 'org.testfx:testfx-junit5:4.0.17'
+    testImplementation 'org.hamcrest:hamcrest:2.2'
+
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+javafx {
+    version = '24.0.1'
+    modules = ['javafx.controls', 'javafx.fxml', 'javafx.graphics', 'javafx.media', 'javafx.web', 'javafx.swing']
+}
+
+application {
+    mainClass = 'main.Main' // path to your main class
+}
+
+run {
+    standardInput = System.in
 }
 
 test {
     useJUnitPlatform()
+
+    // TestFX configuration for JavaFX 24
+    systemProperty 'testfx.robot', 'glass'
+    systemProperty 'testfx.setup.timeout', '60000'
+    systemProperty 'testfx.launch.timeout', '60000'
+
+    jvmArgs '--add-opens', 'javafx.graphics/com.sun.javafx.application=ALL-UNNAMED'
+    jvmArgs '--add-opens', 'javafx.graphics/com.sun.glass.ui=ALL-UNNAMED'
+    jvmArgs '--add-exports', 'javafx.graphics/com.sun.glass.ui=ALL-UNNAMED'
+    jvmArgs '--add-exports', 'javafx.base/com.sun.javafx.runtime=ALL-UNNAMED'
 }
 
-// Fat JAR — bundles everything so 'java -jar chess.jar' works
 jar {
-    manifest {
-        attributes 'Main-Class': 'chess.ui.ChessApp'
-    }
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    from {
-        configurations.runtimeClasspath.collect {
-            it.isDirectory() ? it : zipTree(it)
-        }
+
+    from sourceSets.main.output
+
+    from sourceSets.main.allSource
+
+    manifest {
+        attributes(
+                'Main-Class': application.mainClass.get()
+        )
     }
-    archiveFileName = 'chess.jar'
+
+    archiveFileName = "${project.name}-${project.version}-with-sources.jar"
+}
+
+tasks.withType(JavaExec).configureEach {
+    jvmArgs += [
+            "--enable-native-access=javafx.graphics",
+            "--sun-misc-unsafe-memory-access=allow"
+    ]
+}
+
+tasks.withType(Test).configureEach {
+    jvmArgs += [
+            "--enable-native-access=javafx.graphics",
+            "--sun-misc-unsafe-memory-access=allow"
+    ]
 }
