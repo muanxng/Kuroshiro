@@ -7,6 +7,11 @@ import pieces.Warrior;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Test suite for the {@link Warrior} piece.
+ * Verifies pawn-like directional movement, first-turn double steps, diagonal captures,
+ * forward collision blocking, and the unique multi-life "tank" system.
+ */
 public class WarriorTest {
 
     private Board board;

@@ -11,6 +11,11 @@ import pieces.Warrior;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Test suite for the {@link Archer} piece.
+ * Verifies the piece's movement logic, ranged shooting constraints,
+ * line-of-sight blocking, and interactions with other pieces (e.g., damaging Warriors).
+ */
 public class ArcherTest {
 
     private Board board;

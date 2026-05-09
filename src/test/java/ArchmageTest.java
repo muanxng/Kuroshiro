@@ -9,6 +9,11 @@ import pieces.Warrior;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Test suite for the {@link Archmage} piece.
+ * Verifies movement, infinite-range orthogonal shooting, line-of-sight validation,
+ * and the specific turn-based cooldown mechanics of its magic attacks.
+ */
 public class ArchmageTest {
 
     private Board board;

@@ -4,6 +4,11 @@ import util.GameSetup;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Test suite for the {@link GameSetup} utility.
+ * Verifies that the board initializes correctly with the proper layout,
+ * piece types, and color assignments for both the White and Black players.
+ */
 public class GameSetupTest {
 
     @Test

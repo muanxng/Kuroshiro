@@ -5,6 +5,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Test suite for the {@link GameEngine}.
+ * Verifies the core game state, including turn alternation, move validation,
+ * specialized actions (shooting/stabbing), move counting, and win conditions.
+ */
 public class GameEngineTest {
 
     private Board board;

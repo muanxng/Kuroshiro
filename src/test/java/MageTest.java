@@ -9,6 +9,11 @@ import pieces.Warrior;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Test suite for the {@link Mage} piece.
+ * Verifies standard movement, orthogonal ranged attacks restricted to a 4-tile limit,
+ * line-of-sight blocking, and damage application.
+ */
 public class MageTest {
 
     private Board board;
