@@ -16,82 +16,115 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.scene.image.Image;
+import javafx.scene.media.AudioClip;
 import util.GameSetup;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ChessApp extends Application {
 
     private static final int TILE = 80;
-    private static final int SIZE = 8 * TILE;
+    private static final int BOARD_SIZE = 8;
+    private static final int CANVAS_SIZE = TILE * BOARD_SIZE;
+
+    private static final Color LIGHT = Color.rgb(240, 217, 181);
+    private static final Color DARK = Color.rgb(181, 136, 99);
+    private static final Color SELECT = Color.rgb(255, 255, 0, 0.6);
+    private static final Color MOVE_HIGHLIGHT = Color.rgb(50, 200, 50, 0.5);
+    private static final Color SHOOT_HIGHLIGHT = Color.rgb(255, 140, 0, 0.6);
 
     private final Map<String, Image> pieceImages = new HashMap<>();
 
-    private static final Color LIGHT  = Color.rgb(240, 217, 181);
-    private static final Color DARK   = Color.rgb(181, 136,  99);
-    private static final Color SELECT = Color.rgb(255, 255,   0, 0.6);
-    private static final Color MOVE_HL = Color.rgb( 50, 200,  50, 0.5);
+    private final AudioClip captureSound =
+            new AudioClip(getClass().getResource("/sounds/capture_sound.wav").toExternalForm());
+
+    private final AudioClip gameOverSound =
+            new AudioClip(getClass().getResource("/sounds/game_over_sound.wav").toExternalForm());
 
     private GameEngine engine;
     private Canvas canvas;
     private Label statusLabel;
 
-    private Position selectedPosition = null;
-    private List<Position> legalMoves = null;
+    private Position selectedPosition;
+    private List<Position> legalMoves;
+    private List<Position> shootTargets;
 
     @Override
     public void start(Stage stage) {
-        Board board = GameSetup.createStandardBoard();
-        engine = new GameEngine(board);
+        engine = new GameEngine(GameSetup.createStandardBoard());
 
-        canvas = new Canvas(SIZE, SIZE);
-        canvas.setOnMouseClicked(e -> handleClick(
-                (int)(e.getX() / TILE),
-                (int)(e.getY() / TILE)
-        ));
+        canvas = new Canvas(CANVAS_SIZE, CANVAS_SIZE);
+        canvas.setOnMouseClicked(event ->
+                handleClick(
+                        (int) (event.getX() / TILE),
+                        (int) (event.getY() / TILE)
+                )
+        );
 
-        statusLabel = new Label("White's turn");
-        statusLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
-        statusLabel.setAlignment(Pos.CENTER);
-        statusLabel.setMaxWidth(Double.MAX_VALUE);
-        statusLabel.setPadding(new Insets(10));
+        statusLabel = createStatusLabel();
 
-        GridPane colLabels = makeColLabels();
-        GridPane rowLabels = makeRowLabels();
+        VBox root = new VBox(
+                createColumnLabels(),
+                createBoardRow(),
+                statusLabel
+        );
 
-        HBox boardRow = new HBox(rowLabels, canvas);
-        boardRow.setAlignment(Pos.CENTER);
-
-        VBox root = new VBox(colLabels, boardRow, statusLabel);
         root.setAlignment(Pos.CENTER);
-        root.setStyle("-fx-background-color: #312e2b;");
-        root.setPadding(new Insets(16));
         root.setSpacing(0);
+        root.setPadding(new Insets(16));
+        root.setStyle("-fx-background-color: #312e2b;");
 
         loadImages();
         draw();
 
-        Scene scene = new Scene(root);
         stage.setTitle("Chess");
-        stage.setScene(scene);
+        stage.setScene(new Scene(root));
         stage.setResizable(false);
         stage.show();
     }
 
+    private Label createStatusLabel() {
+        Label label = new Label("White's turn");
+        label.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        label.setAlignment(Pos.CENTER);
+        label.setMaxWidth(Double.MAX_VALUE);
+        label.setPadding(new Insets(10));
+        return label;
+    }
+
+    private HBox createBoardRow() {
+        HBox row = new HBox(createRowLabels(), canvas);
+        row.setAlignment(Pos.CENTER);
+        return row;
+    }
+
     private void loadImages() {
         String[] colors = {"white", "black"};
-        String[] pieces = {"archmage", "dragon", "archer", "mage", "assassin", "warrior"};
+        String[] pieces = {
+                "archmage",
+                "dragon",
+                "archer",
+                "mage",
+                "assassin",
+                "warrior"
+        };
+
         for (String color : colors) {
             for (String piece : pieces) {
                 String key = color + "_" + piece;
+
                 try {
-                    Image img = new Image(getClass().getResourceAsStream("/images/" + key + ".png"));
-                    pieceImages.put(key, img);
-                } catch (Exception e) {
-                    System.out.println("Image not found: " + key);
+                    Image image = new Image(
+                            getClass().getResourceAsStream("/images/" + key + ".png")
+                    );
+
+                    pieceImages.put(key, image);
+
+                } catch (Exception ignored) {
+                    System.out.println("Missing image: " + key);
                 }
             }
         }
@@ -101,119 +134,214 @@ public class ChessApp extends Application {
         GraphicsContext g = canvas.getGraphicsContext2D();
         Board board = engine.getBoard();
 
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
+        for (int row = 0; row < BOARD_SIZE; row++) {
+            for (int col = 0; col < BOARD_SIZE; col++) {
+
                 double x = col * TILE;
                 double y = row * TILE;
-                Position pos = new Position(row, col);
 
-                // Base square
-                g.setFill((row + col) % 2 == 0 ? LIGHT : DARK);
-                g.fillRect(x, y, TILE, TILE);
+                Position position = new Position(row, col);
 
-                // Selected square
-                if (pos.equals(selectedPosition)) {
-                    g.setFill(SELECT);
-                    g.fillRect(x, y, TILE, TILE);
+                drawTile(g, row, col, x, y);
+                drawHighlights(g, board, position, x, y);
+
+                Piece piece = board.getPieceAt(position);
+
+                if (piece != null) {
+                    drawPiece(g, piece, x, y);
                 }
 
-                if (shootTargets != null && shootTargets.contains(pos)) {
-                    g.setFill(Color.rgb(255, 140, 0, 0.6));
-                    g.fillRect(x, y, TILE, TILE);
-                }
-
-                if (legalMoves != null && legalMoves.contains(pos)) {
-                    g.setFill(MOVE_HL);
-                    g.fillRect(x, y, TILE, TILE);
-                    if (board.isEmpty(pos)) {
-                        g.setFill(Color.rgb(0, 120, 0, 0.6));
-                        double dot = TILE / 3.0;
-                        g.fillOval(x + (TILE - dot) / 2, y + (TILE - dot) / 2, dot, dot);
-                    }
-                }
-
-                // Draw piece
-                Piece piece = board.getPieceAt(pos);
-                if (piece != null) drawPiece(g, piece, x, y);
-
-                // Coordinate labels
-                g.setFont(Font.font("Arial", 11));
-                g.setFill((row + col) % 2 == 0 ? DARK : LIGHT);
-                if (col == 0) g.fillText(String.valueOf(8 - row), x + 3, y + 14);
-                if (row == 7) g.fillText(String.valueOf((char)('a' + col)), x + TILE - 12, y + TILE - 4);
+                drawCoordinates(g, row, col, x, y);
             }
+        }
+    }
+
+    private void drawTile(GraphicsContext g, int row, int col, double x, double y) {
+        g.setFill((row + col) % 2 == 0 ? LIGHT : DARK);
+        g.fillRect(x, y, TILE, TILE);
+    }
+
+    private void drawHighlights(
+            GraphicsContext g,
+            Board board,
+            Position position,
+            double x,
+            double y
+    ) {
+
+        if (position.equals(selectedPosition)) {
+            g.setFill(SELECT);
+            g.fillRect(x, y, TILE, TILE);
+        }
+
+        if (shootTargets != null && shootTargets.contains(position)) {
+            g.setFill(SHOOT_HIGHLIGHT);
+            g.fillRect(x, y, TILE, TILE);
+        }
+
+        if (legalMoves != null && legalMoves.contains(position)) {
+            g.setFill(MOVE_HIGHLIGHT);
+            g.fillRect(x, y, TILE, TILE);
+
+            if (board.isEmpty(position)) {
+                double dot = TILE / 3.0;
+
+                g.setFill(Color.rgb(0, 120, 0, 0.6));
+                g.fillOval(
+                        x + (TILE - dot) / 2,
+                        y + (TILE - dot) / 2,
+                        dot,
+                        dot
+                );
+            }
+        }
+    }
+
+    private void drawCoordinates(
+            GraphicsContext g,
+            int row,
+            int col,
+            double x,
+            double y
+    ) {
+
+        g.setFont(Font.font("Arial", 11));
+        g.setFill((row + col) % 2 == 0 ? DARK : LIGHT);
+
+        if (col == 0) {
+            g.fillText(String.valueOf(8 - row), x + 3, y + 14);
+        }
+
+        if (row == 7) {
+            g.fillText(
+                    String.valueOf((char) ('a' + col)),
+                    x + TILE - 12,
+                    y + TILE - 4
+            );
         }
     }
 
     private void drawPiece(GraphicsContext g, Piece piece, double x, double y) {
-        String color = piece.getColor() == core.Color.WHITE ? "white" : "black";
-        String name = piece.getClass().getSimpleName().toLowerCase();
+
+        String color =
+                piece.getColor() == core.Color.WHITE ? "white" : "black";
+
+        String name =
+                piece.getClass().getSimpleName().toLowerCase();
+
         String key = color + "_" + name;
 
-        Image img = pieceImages.get(key);
-        if (img != null) {
-            g.drawImage(img, x + 4, y + 4, TILE - 8, TILE - 8);
-        } else {
-            String symbol = piece.getSymbol().toUpperCase();
-            g.setFont(Font.font("Arial", FontWeight.BOLD, TILE / 2));
+        Image image = pieceImages.get(key);
 
-            boolean isDamagedWarrior = piece instanceof pieces.Warrior
-                    && ((pieces.Warrior) piece).getLives() == 1;
-
-            g.setFill(Color.rgb(0, 0, 0, 0.4));
-            g.fillText(symbol, x + (TILE / 2.0) - 8 + 2, y + (TILE / 2.0) + 8 + 2);
-
-            if (isDamagedWarrior) {
-                g.setFill(Color.rgb(220, 50, 50));
-            } else {
-                g.setFill(piece.getColor() == core.Color.WHITE ? Color.WHITE : Color.rgb(30, 30, 30));
-            }
-            g.fillText(symbol, x + (TILE / 2.0) - 8, y + (TILE / 2.0) + 8);
-
-            g.setStroke(piece.getColor() == core.Color.WHITE ? Color.rgb(80, 80, 80) : Color.rgb(200, 200, 200));
-            g.setLineWidth(1);
-            g.strokeText(symbol, x + (TILE / 2.0) - 8, y + (TILE / 2.0) + 8);
+        if (image != null) {
+            g.drawImage(image, x + 4, y + 4, TILE - 8, TILE - 8);
+            return;
         }
+
+        drawFallbackPiece(g, piece, x, y);
+    }
+
+    private void drawFallbackPiece(
+            GraphicsContext g,
+            Piece piece,
+            double x,
+            double y
+    ) {
+
+        String symbol = piece.getSymbol().toUpperCase();
+
+        g.setFont(Font.font("Arial", FontWeight.BOLD, TILE / 2));
+
+        boolean damagedWarrior =
+                piece instanceof pieces.Warrior warrior
+                        && warrior.getLives() == 1;
+
+        g.setFill(Color.rgb(0, 0, 0, 0.4));
+        g.fillText(symbol, x + TILE / 2.0 - 6, y + TILE / 2.0 + 10);
+
+        if (damagedWarrior) {
+            g.setFill(Color.rgb(220, 50, 50));
+        } else {
+            g.setFill(
+                    piece.getColor() == core.Color.WHITE
+                            ? Color.WHITE
+                            : Color.rgb(30, 30, 30)
+            );
+        }
+
+        g.fillText(symbol, x + TILE / 2.0 - 8, y + TILE / 2.0 + 8);
+
+        g.setStroke(
+                piece.getColor() == core.Color.WHITE
+                        ? Color.rgb(80, 80, 80)
+                        : Color.rgb(200, 200, 200)
+        );
+
+        g.setLineWidth(1);
+
+        g.strokeText(symbol, x + TILE / 2.0 - 8, y + TILE / 2.0 + 8);
     }
 
     private void handleClick(int col, int row) {
 
-        if (engine.isGameOver()) return;
+        if (engine.isGameOver()) {
+            return;
+        }
 
         Position clicked = new Position(row, col);
-        Piece clickedPiece = engine.getBoard().getPieceAt(clicked);
+
+        Piece clickedPiece =
+                engine.getBoard().getPieceAt(clicked);
 
         if (selectedPosition == null) {
-            // Select a piece
-            if (clickedPiece != null && clickedPiece.getColor() == engine.getCurrentTurn()) {
-                selectedPosition = clicked;
-                legalMoves = engine.getSafeMoves(clickedPiece);
-                if (isShooting(clickedPiece)) {
-                    shootTargets = getShootTargets(clickedPiece);
-                }
-            }
-        } else {
-            if (clicked.equals(selectedPosition)) {
-                // Deselect
-                clearSelection();
-            } else if (clickedPiece != null && clickedPiece.getColor() == engine.getCurrentTurn()) {
-                // Switch to another piece
-                selectedPosition = clicked;
-                legalMoves = engine.getSafeMoves(clickedPiece);
-                shootTargets = isShooting(clickedPiece) ? getShootTargets(clickedPiece) : null;
-            } else if (shootTargets != null && shootTargets.contains(clicked)) {
-                // Clicked an orange target — shoot
-                MoveResult result = shoot(selectedPosition, clicked);
-                clearSelection();
-                updateStatus(result);
-            } else {
-                // Clicked a green target — move
-                MoveResult result = engine.makeMove(selectedPosition, clicked);
-                clearSelection();
-                updateStatus(result);
-            }
+            selectPiece(clicked, clickedPiece);
+            draw();
+            return;
         }
+
+        if (clicked.equals(selectedPosition)) {
+            clearSelection();
+
+        } else if (
+                clickedPiece != null
+                        && clickedPiece.getColor() == engine.getCurrentTurn()
+        ) {
+
+            selectPiece(clicked, clickedPiece);
+
+        } else if (
+                shootTargets != null
+                        && shootTargets.contains(clicked)
+        ) {
+
+            MoveResult result = shoot(selectedPosition, clicked);
+
+            clearSelection();
+            updateStatus(result);
+
+        } else {
+
+            MoveResult result =
+                    engine.makeMove(selectedPosition, clicked);
+
+            clearSelection();
+            updateStatus(result);
+        }
+
         draw();
+    }
+
+    private void selectPiece(Position position, Piece piece) {
+        if (piece == null || piece.getColor() != engine.getCurrentTurn()) {
+            return;
+        }
+
+        selectedPosition = position;
+        legalMoves = engine.getSafeMoves(piece);
+
+        shootTargets = isShootingPiece(piece)
+                ? getShootTargets(piece)
+                : null;
     }
 
     private void clearSelection() {
@@ -223,84 +351,142 @@ public class ChessApp extends Application {
     }
 
     private void updateStatus(MoveResult result) {
+
         if (!result.isSuccess()) {
             statusLabel.setText("Invalid move!");
             return;
         }
 
         if (result.isWon()) {
+
+            if (gameOverSound != null) {
+                gameOverSound.play();
+            }
+
             core.Color winner = engine.getWinner();
-            String name = winner == core.Color.WHITE ? "White" : "Black";
-            statusLabel.setText(name + " wins! All enemy pieces eliminated!");
-            showAlert(name + " wins!", "All enemy pieces eliminated!");
-        } else {
-            statusLabel.setText(engine.getCurrentTurn() + "'s turn  |  Move: " + engine.getTotalMoves());
+
+            String winnerName =
+                    winner == core.Color.WHITE ? "White" : "Black";
+
+            statusLabel.setText(
+                    winnerName + " wins! All enemy pieces eliminated!"
+            );
+
+            showAlert(
+                    winnerName + " wins!",
+                    "All enemy pieces eliminated!"
+            );
+
+            return;
         }
+
+        if (result.getCapturedPiece() != null && captureSound != null) {
+            captureSound.play();
+        }
+
+        statusLabel.setText(
+                engine.getCurrentTurn()
+                        + "'s turn  |  Move: "
+                        + engine.getTotalMoves()
+        );
     }
 
     private void showAlert(String title, String header) {
         Alert alert = new Alert(AlertType.INFORMATION);
+
         alert.setTitle(title);
         alert.setHeaderText(header);
+
         alert.show();
     }
 
-    private GridPane makeColLabels() {
-        GridPane gp = new GridPane();
-        gp.setPadding(new Insets(0, 0, 0, 20));
-        for (int col = 0; col < 8; col++) {
-            Label l = new Label(String.valueOf((char)('a' + col)));
-            l.setFont(Font.font("Arial", FontWeight.BOLD, 13));
-            l.setTextFill(Color.rgb(200, 200, 200));
-            l.setMinWidth(TILE);
-            l.setAlignment(Pos.CENTER);
-            gp.add(l, col, 0);
+    private GridPane createColumnLabels() {
+
+        GridPane grid = new GridPane();
+
+        grid.setPadding(new Insets(0, 0, 0, 20));
+
+        for (int col = 0; col < BOARD_SIZE; col++) {
+
+            Label label =
+                    new Label(String.valueOf((char) ('a' + col)));
+
+            label.setFont(Font.font("Arial", FontWeight.BOLD, 13));
+            label.setTextFill(Color.rgb(200, 200, 200));
+            label.setMinWidth(TILE);
+            label.setAlignment(Pos.CENTER);
+
+            grid.add(label, col, 0);
         }
-        return gp;
+
+        return grid;
     }
 
-    private GridPane makeRowLabels() {
-        GridPane gp = new GridPane();
-        gp.setPadding(new Insets(0, 4, 0, 0));
-        for (int row = 0; row < 8; row++) {
-            Label l = new Label(String.valueOf(8 - row));
-            l.setFont(Font.font("Arial", FontWeight.BOLD, 13));
-            l.setTextFill(Color.rgb(200, 200, 200));
-            l.setMinHeight(TILE);
-            l.setAlignment(Pos.CENTER);
-            gp.add(l, 0, row);
+    private GridPane createRowLabels() {
+
+        GridPane grid = new GridPane();
+
+        grid.setPadding(new Insets(0, 4, 0, 0));
+
+        for (int row = 0; row < BOARD_SIZE; row++) {
+
+            Label label =
+                    new Label(String.valueOf(8 - row));
+
+            label.setFont(Font.font("Arial", FontWeight.BOLD, 13));
+            label.setTextFill(Color.rgb(200, 200, 200));
+            label.setMinHeight(TILE);
+            label.setAlignment(Pos.CENTER);
+
+            grid.add(label, 0, row);
         }
-        return gp;
+
+        return grid;
     }
 
-    private boolean isShooting(Piece piece) {
+    private boolean isShootingPiece(Piece piece) {
         return piece instanceof pieces.Mage
                 || piece instanceof pieces.Archmage
                 || piece instanceof pieces.Archer;
     }
 
-    private List<Position> shootTargets = null;
-
     private List<Position> getShootTargets(Piece piece) {
-        if (piece instanceof pieces.Mage)
-            return ((pieces.Mage) piece).getMagicTargets(engine.getBoard());
-        if (piece instanceof pieces.Archmage)
-            return ((pieces.Archmage) piece).getMagicTargets(engine.getBoard());
-        if (piece instanceof pieces.Archer)
-            return ((pieces.Archer) piece).getShootTargets(engine.getBoard());
+
+        if (piece instanceof pieces.Mage mage) {
+            return mage.getMagicTargets(engine.getBoard());
+        }
+
+        if (piece instanceof pieces.Archmage archmage) {
+            return archmage.getMagicTargets(engine.getBoard());
+        }
+
+        if (piece instanceof pieces.Archer archer) {
+            return archer.getShootTargets(engine.getBoard());
+        }
+
         return new ArrayList<>();
     }
 
     private MoveResult shoot(Position from, Position target) {
+
         Piece piece = engine.getBoard().getPieceAt(from);
-        if (piece instanceof pieces.Mage)
+
+        if (piece instanceof pieces.Mage) {
             return engine.shootMagic(from, target);
-        if (piece instanceof pieces.Archmage)
+        }
+
+        if (piece instanceof pieces.Archmage) {
             return engine.archmageShoot(from, target);
-        if (piece instanceof pieces.Archer)
+        }
+
+        if (piece instanceof pieces.Archer) {
             return engine.archerShoot(from, target);
+        }
+
         return MoveResult.failure(MoveResult.Status.INVALID_MOVE);
     }
 
-    public static void main(String[] args) { launch(args); }
+    public static void main(String[] args) {
+        launch(args);
+    }
 }
