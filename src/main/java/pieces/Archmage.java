@@ -35,7 +35,7 @@ public class Archmage extends Piece implements Shootable{
         return moves;
     }
 
-    public List<Position> getMagicTargets(Board board) {
+    public List<Position> getShootTargets(Board board) {
         List<Position> targets = new ArrayList<>();
         if (!canUseMagic()) return targets;
 
@@ -55,7 +55,7 @@ public class Archmage extends Piece implements Shootable{
 
     public Piece shoot(Position target, Board board) {
         if (!canUseMagic()) return null;
-        if (!getMagicTargets(board).contains(target)) return null;
+        if (!getShootTargets(board).contains(target)) return null;
         Piece captured = board.getPieceAt(target);
         magicCooldown = 2;
         if (captured instanceof Warrior warrior) {
@@ -63,6 +63,11 @@ public class Archmage extends Piece implements Shootable{
         }
         else board.removePiece(target);
         return captured;
+    }
+
+    @Override
+    public List<Position> getTargets(Board board) {
+        return getShootTargets(board);
     }
 
     public boolean canUseMagic()      { return magicCooldown == 0; }

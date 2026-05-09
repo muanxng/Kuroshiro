@@ -26,7 +26,7 @@ public class MageTest {
         Warrior enemy = new Warrior(Color.BLACK, new Position(1,4));
         board.placePiece(m);
         board.placePiece(enemy);
-        assertTrue(m.getMagicTargets(board).contains(new Position(1,4)));
+        assertTrue(m.getShootTargets(board).contains(new Position(1,4)));
     }
 
     @Test void cannotShootBeyond4Tiles() {
@@ -34,7 +34,7 @@ public class MageTest {
         Warrior enemy = new Warrior(Color.BLACK, new Position(0,4));
         board.placePiece(m);
         board.placePiece(enemy);
-        assertFalse(m.getMagicTargets(board).contains(new Position(0,4)));
+        assertFalse(m.getShootTargets(board).contains(new Position(0,4)));
     }
 
     @Test void shotBlockedByAllyPiece() {
@@ -44,7 +44,7 @@ public class MageTest {
         board.placePiece(m);
         board.placePiece(ally);
         board.placePiece(enemy);
-        assertFalse(m.getMagicTargets(board).contains(new Position(2,4)));
+        assertFalse(m.getShootTargets(board).contains(new Position(2,4)));
     }
 
     @Test

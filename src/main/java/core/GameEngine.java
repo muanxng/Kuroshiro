@@ -1,11 +1,8 @@
 package core;
 
-import pieces.Mage;
 import pieces.Archmage;
-import pieces.Archer;
 import pieces.Warrior;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class GameEngine {
@@ -28,26 +25,45 @@ public class GameEngine {
         if (gameOver) return MoveResult.failure(MoveResult.Status.GAME_OVER);
 
         Piece piece = board.getPieceAt(from);
+        Piece target = board.getPieceAt(to);
+
         if (piece == null) return MoveResult.failure(MoveResult.Status.NO_PIECE_SELECTED);
         if (piece.getColor() != currentTurn) return MoveResult.failure(MoveResult.Status.WRONG_TURN);
 
         List<Position> legalMoves = getSafeMoves(piece);
         if (!legalMoves.contains(to)) return MoveResult.failure(MoveResult.Status.INVALID_MOVE);
 
-        Piece target = board.getPieceAt(to);
-        if (target instanceof Warrior) {
-            Warrior warrior = (Warrior) target;
-            boolean died = warrior.takeDamage();
-            if (!died) {
-                // Warrior survived — end turn without moving the attacker
-                decrementCooldowns();
-                totalMoves++;
-                return finishTurn(null);
-            }
-        }
-
         Piece captured = board.movePiece(piece, to);
 
+        decrementCooldowns();
+        totalMoves++;
+
+        return finishTurn(captured);
+    }
+
+    public MoveResult stab(Position shooterPos, Position target) {
+
+        if (gameOver) {
+            return MoveResult.failure(MoveResult.Status.GAME_OVER);
+        }
+
+        Piece piece = board.getPieceAt(shooterPos);
+
+        if (!(piece instanceof Stabbable stabbable)) {
+            return MoveResult.failure(MoveResult.Status.NO_PIECE_SELECTED);
+        }
+
+        if (piece.getColor() != currentTurn) {
+            return MoveResult.failure(MoveResult.Status.WRONG_TURN);
+        }
+
+        Piece captured = stabbable.stab(target, board);
+
+        if (captured == null) {
+            return MoveResult.failure(MoveResult.Status.INVALID_MOVE);
+        }
+
+        board.movePiece(piece, target);
         decrementCooldowns();
         totalMoves++;
 
@@ -62,7 +78,7 @@ public class GameEngine {
 
         Piece piece = board.getPieceAt(shooterPos);
 
-        if (!(piece instanceof Shootable shooter)) {
+        if (!(piece instanceof Shootable shootable)) {
             return MoveResult.failure(MoveResult.Status.NO_PIECE_SELECTED);
         }
 
@@ -70,7 +86,7 @@ public class GameEngine {
             return MoveResult.failure(MoveResult.Status.WRONG_TURN);
         }
 
-        Piece captured = shooter.shoot(target, board);
+        Piece captured = shootable.shoot(target, board);
 
         if (captured == null) {
             return MoveResult.failure(MoveResult.Status.INVALID_MOVE);
@@ -104,8 +120,8 @@ public class GameEngine {
 
     private void decrementCooldowns() {
         for (Piece p : board.getPieces(currentTurn)) {
-            if (p instanceof Archmage)
-                ((Archmage) p).decrementCooldown();
+            if (p instanceof Archmage archmage)
+                archmage.decrementCooldown();
         }
     }
 }

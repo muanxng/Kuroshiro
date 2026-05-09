@@ -3,7 +3,7 @@ package pieces;
 import core.*;
 import java.util.*;
 
-public class Warrior extends Piece {
+public class Warrior extends Piece implements Stabbable{
 
     private int lives;
 
@@ -39,11 +39,18 @@ public class Warrior extends Piece {
 
     public boolean takeDamage() {
         lives--;
-        return lives <= 0;
+        return !isAlive();
     }
 
     public int getLives() { return lives; }
     public boolean isAlive() { return lives > 0; }
+
+    @Override
+    public Piece stab(Position target, Board board) {
+        Piece captured = board.getPieceAt(target);
+        board.removePiece(target);
+        return captured;
+    }
 
     @Override
     public String getSymbol() { return lives == 2 ? "W" : "w"; }

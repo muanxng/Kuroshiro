@@ -3,7 +3,6 @@ import core.Color;
 import core.Position;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import pieces.Archer;
 import pieces.Archmage;
 import pieces.Assassin;
 import pieces.Warrior;
@@ -30,7 +29,7 @@ public class ArchmageTest {
         Warrior enemy = new Warrior(Color.BLACK, new Position(0,4));
         board.placePiece(a);
         board.placePiece(enemy);
-        assertTrue(a.getMagicTargets(board).contains(new Position(0,4)));
+        assertTrue(a.getShootTargets(board).contains(new Position(0,4)));
     }
 
     @Test
@@ -41,7 +40,7 @@ public class ArchmageTest {
         board.placePiece(a);
         board.placePiece(ally);
         board.placePiece(enemy);
-        assertFalse(a.getMagicTargets(board).contains(new Position(0,4)));
+        assertFalse(a.getShootTargets(board).contains(new Position(0,4)));
     }
 
     @Test

@@ -8,7 +8,7 @@ import java.util.*;
  * Can jump over any pieces like a Knight.
  * Captures by landing on an enemy piece.
  */
-public class Assassin extends Piece {
+public class Assassin extends Piece implements Stabbable{
 
     private static final int[][] DIAGONAL_DIRS = {
         {-1,-1},{-1,1},{1,-1},{1,1}
@@ -30,6 +30,13 @@ public class Assassin extends Piece {
             }
         }
         return moves;
+    }
+
+    @Override
+    public Piece stab(Position target, Board board) {
+        Piece captured = board.getPieceAt(target);
+        board.removePiece(target);
+        return captured;
     }
 
     @Override

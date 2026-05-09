@@ -56,5 +56,10 @@ public class Archer extends Piece implements Shootable{
     }
 
     @Override
+    public List<Position> getTargets(Board board) {
+        return getShootTargets(board);
+    }
+
+    @Override
     public String getSymbol() { return "A"; }
 }

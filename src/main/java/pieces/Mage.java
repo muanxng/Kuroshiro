@@ -31,7 +31,7 @@ public class Mage extends Piece implements Shootable{
         return moves;
     }
 
-    public List<Position> getMagicTargets(Board board) {
+    public List<Position> getShootTargets(Board board) {
         List<Position> targets = new ArrayList<>();
         for (int[] dir : SHOOT_DIRS) {
             for (int i = 1; i <= SHOOT_RANGE; i++) {
@@ -48,13 +48,18 @@ public class Mage extends Piece implements Shootable{
     }
 
     public Piece shoot(Position target, Board board) {
-        if (!getMagicTargets(board).contains(target)) return null;
+        if (!getShootTargets(board).contains(target)) return null;
         Piece captured = board.getPieceAt(target);
         if (captured instanceof Warrior warrior) {
             if (warrior.takeDamage()) board.removePiece(target);
         }
         else board.removePiece(target);
         return captured;
+    }
+
+    @Override
+    public List<Position> getTargets(Board board) {
+        return getShootTargets(board);
     }
 
     @Override

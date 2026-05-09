@@ -7,8 +7,6 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
@@ -29,7 +27,6 @@ public class ChessApp extends Application {
 
     private static final int BOARD_SIZE = 8;
 
-    // Dynamic tile size updated on resize
     private double TILE = 80;
 
     private static final Color LIGHT = Color.rgb(240, 217, 181);
@@ -79,7 +76,7 @@ public class ChessApp extends Application {
         root.setAlignment(Pos.CENTER);
         root.setSpacing(5);
         root.setPadding(new Insets(16));
-        root.setStyle("-fx-background-color: #312e2b;");
+        root.setStyle("-fx-background-image: url('/images/background.png'); " + "-fx-background-size: contain; " + "-fx-background-position: center;");
 
         loadImages();
 
@@ -93,10 +90,13 @@ public class ChessApp extends Application {
         scene.heightProperty().addListener((obs, oldVal, newVal) -> resizeBoard(scene));
 
         stage.show();
+        scene.setOnKeyPressed(e -> {
+            if (e.getCode() == javafx.scene.input.KeyCode.F11) {
+                stage.setFullScreen(!stage.isFullScreen());
+            }
+        });
         resizeBoard(scene);
     }
-
-    // ── Resize ───────────────────────────────────────────────────────────────
 
     private void resizeBoard(Scene scene) {
         double available = Math.min(
@@ -111,19 +111,15 @@ public class ChessApp extends Application {
         draw();
     }
 
-    // ── Status label ─────────────────────────────────────────────────────────
-
     private Label createStatusLabel() {
         Label label = new Label("White's turn");
         label.setFont(Font.font("Arial", FontWeight.BOLD, 16));
-        label.setTextFill(Color.WHITE);
+        label.setTextFill(Color.BLACK);
         label.setAlignment(Pos.CENTER);
         label.setMaxWidth(Double.MAX_VALUE);
         label.setPadding(new Insets(10));
         return label;
     }
-
-    // ── Images ───────────────────────────────────────────────────────────────
 
     private void loadImages() {
         String[] colors = {"white", "black"};
@@ -153,8 +149,6 @@ public class ChessApp extends Application {
             }
         }
     }
-
-    // ── Drawing ───────────────────────────────────────────────────────────────
 
     private void draw() {
         GraphicsContext g = canvas.getGraphicsContext2D();
@@ -225,13 +219,11 @@ public class ChessApp extends Application {
     private void drawCoordinates(GraphicsContext g, int row, int col, double x, double y) {
         g.setFont(Font.font("Arial", FontWeight.BOLD, TILE * 0.15));
 
-        // Row numbers on the left edge of the board
         if (col == 0) {
             g.setFill(Color.rgb(200, 200, 200));
             g.fillText(String.valueOf(8 - row), x + 4, y + TILE * 0.2);
         }
 
-        // Column letters on the bottom edge of the board
         if (row == 7) {
             g.setFill(Color.rgb(200, 200, 200));
             g.fillText(
@@ -301,8 +293,6 @@ public class ChessApp extends Application {
         g.strokeText(symbol, x + TILE / 2.0 - 8, y + TILE / 2.0 + 8);
     }
 
-    // ── Click handling ────────────────────────────────────────────────────────
-
     private void handleClick(int col, int row) {
 
         if (engine.isGameOver()) {
@@ -324,25 +314,13 @@ public class ChessApp extends Application {
             clearSelection();
 
         } else if (
-                clickedPiece != null
-                        && clickedPiece.getColor() == engine.getCurrentTurn()
+                clickedPiece != null && clickedPiece.getColor() == engine.getCurrentTurn()
         ) {
 
             selectPiece(clicked, clickedPiece);
-
-        } else if (
-                shootTargets != null
-                        && shootTargets.contains(clicked)
-        ) {
-
-            MoveResult result = shoot(selectedPosition, clicked);
-            clearSelection();
-            updateStatus(result);
-
         } else {
 
-            MoveResult result =
-                    engine.makeMove(selectedPosition, clicked);
+            MoveResult result = makeMove(selectedPosition, clicked);
             clearSelection();
             updateStatus(result);
         }
@@ -367,9 +345,17 @@ public class ChessApp extends Application {
         selectedPosition = position;
         legalMoves = engine.getSafeMoves(piece);
 
-        shootTargets = isShootingPiece(piece)
-                ? getShootTargets(piece)
-                : null;
+        if (piece instanceof Shootable) {
+            shootTargets = getShootTargets(piece);
+        } else if (piece instanceof Stabbable) {
+            shootTargets = getStabTargets(piece);
+            // Remove enemy squares from green highlights
+            legalMoves = legalMoves.stream()
+                    .filter(pos -> engine.getBoard().getPieceAt(pos) == null)
+                    .collect(java.util.stream.Collectors.toList());
+        } else {
+            shootTargets = null;
+        }
     }
 
     private void clearSelection() {
@@ -377,8 +363,6 @@ public class ChessApp extends Application {
         legalMoves = null;
         shootTargets = null;
     }
-
-    // ── Status ────────────────────────────────────────────────────────────────
 
     private void updateStatus(MoveResult result) {
 
@@ -393,9 +377,8 @@ public class ChessApp extends Application {
             core.Color winner = engine.getWinner();
             String winnerName = winner == core.Color.WHITE ? "White" : "Black";
 
-            statusLabel.setText(winnerName + " wins! All enemy pieces eliminated!");
+            statusLabel.setText(winnerName + " wins!");
             newGameButton.setVisible(true);
-            showAlert(winnerName + " wins!", "All enemy pieces eliminated!");
             return;
         }
 
@@ -405,29 +388,25 @@ public class ChessApp extends Application {
         statusLabel.setText(engine.getCurrentTurn() + "'s turn  |  Move: " + engine.getTotalMoves());
     }
 
-    private void showAlert(String title, String header) {
-        Alert alert = new Alert(AlertType.INFORMATION);
-        alert.setTitle(title);
-        alert.setHeaderText(header);
-        alert.show();
-    }
-
-    // ── Shoot helpers ─────────────────────────────────────────────────────────
-
-    private boolean isShootingPiece(Piece piece) {
-        return piece instanceof pieces.Mage
-                || piece instanceof pieces.Archmage
-                || piece instanceof pieces.Archer;
+    private List<Position> getStabTargets(Piece piece) {
+        List<Position> targets = new ArrayList<>();
+        for (Position pos : engine.getSafeMoves(piece)) {
+            Piece occupant = engine.getBoard().getPieceAt(pos);
+            if (occupant != null && occupant.getColor() != engine.getCurrentTurn()) {
+                targets.add(pos);
+            }
+        }
+        return targets;
     }
 
     private List<Position> getShootTargets(Piece piece) {
 
         if (piece instanceof pieces.Mage mage) {
-            return mage.getMagicTargets(engine.getBoard());
+            return mage.getShootTargets(engine.getBoard());
         }
 
         if (piece instanceof pieces.Archmage archmage) {
-            return archmage.getMagicTargets(engine.getBoard());
+            return archmage.getShootTargets(engine.getBoard());
         }
 
         if (piece instanceof pieces.Archer archer) {
@@ -437,24 +416,30 @@ public class ChessApp extends Application {
         return new ArrayList<>();
     }
 
-    private MoveResult shoot(Position from, Position target) {
-
+    private MoveResult makeMove(Position from, Position target) {
         Piece piece = engine.getBoard().getPieceAt(from);
+        Piece targetPiece = engine.getBoard().getPieceAt(target);
 
-        if (piece instanceof pieces.Mage) {
-            return engine.shoot(from, target);
+        if (targetPiece != null && targetPiece.getColor() != engine.getCurrentTurn()) {
+            if (piece instanceof Shootable) {
+                List<Position> targets = getShootTargets(piece);
+                if (!targets.contains(target)) {
+                    return MoveResult.failure(MoveResult.Status.INVALID_MOVE);
+                }
+                return engine.shoot(from, target);
+            }
+            if (piece instanceof Stabbable) {
+                List<Position> targets = engine.getSafeMoves(piece);
+                if (!targets.contains(target)) {
+                    return MoveResult.failure(MoveResult.Status.INVALID_MOVE);
+                }
+                return engine.stab(from, target);
+            }
         }
 
-        if (piece instanceof pieces.Archmage) {
-            return engine.shoot(from, target);
-        }
-
-        if (piece instanceof pieces.Archer) {
-            return engine.shoot(from, target);
-        }
-
-        return MoveResult.failure(MoveResult.Status.INVALID_MOVE);
+        return engine.makeMove(from, target);
     }
+
 
     public static void main(String[] args) {
         launch(args);
