@@ -5,6 +5,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestClassOrder;
 import pieces.Archer;
+import pieces.Assassin;
+import pieces.Mage;
 import pieces.Warrior;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -62,12 +64,25 @@ public class ArcherTest {
     }
 
     @Test
-    void shootEnemyTest() {
-        Archer a = new Archer(Color.WHITE, new Position(4,4));
-        Warrior enemy = new Warrior(Color.BLACK, new Position(2,2));
-        board.placePiece(a);
-        board.placePiece(enemy);
-        a.shoot(new Position(2,2), board);
-        assertNull(board.getPieceAt(new Position(2,2)));
+    void testShootWarrior() {
+        Archer archer = new Archer(Color.WHITE, new Position(4, 4));
+        Warrior warrior = new Warrior(Color.BLACK, new Position(5, 5));
+        board.placePiece(archer);
+        board.placePiece(warrior);
+        archer.shoot(new Position(5, 5), board);
+        assertNotNull(board.getPieceAt(new Position(5, 5)));
+        assertEquals(1, warrior.getLives());
+        archer.shoot(new Position(5, 5), board);
+        assertNull(board.getPieceAt(new Position(5, 5)));
+    }
+
+    @Test
+    void pieceRemovedFromBoardTest() {
+        Archer archer = new Archer(Color.WHITE, new Position(4, 4));
+        Assassin assassin = new Assassin(Color.BLACK, new Position(5, 5));
+        board.placePiece(archer);
+        board.placePiece(assassin);
+        archer.shoot(new Position(5, 5), board);
+        assertNull(board.getPieceAt(new Position(5, 5)));
     }
 }

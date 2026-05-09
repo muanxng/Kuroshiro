@@ -41,6 +41,7 @@ application {
 
 run {
     standardInput = System.in
+    jvmArgs = ['--enable-native-access=javafx.media']
 }
 
 test {

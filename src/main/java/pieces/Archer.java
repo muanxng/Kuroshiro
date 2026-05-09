@@ -3,7 +3,7 @@ package pieces;
 import core.*;
 import java.util.*;
 
-public class Archer extends Piece {
+public class Archer extends Piece implements Shootable{
 
     private static final int[][] MOVE_DIRS = {
         {-1,-1},{-1,0},{-1,1},
@@ -38,7 +38,7 @@ public class Archer extends Piece {
                 Piece target = board.getPieceAt(current);
                 if (target != null) {
                     if (target.getColor() != this.color) targets.add(current);
-                    break; // blocked by any piece
+                    break;
                 }
             }
         }
@@ -48,8 +48,16 @@ public class Archer extends Piece {
     public Piece shoot(Position target, Board board) {
         if (!getShootTargets(board).contains(target)) return null;
         Piece captured = board.getPieceAt(target);
-        board.removePiece(target);
+        if (captured instanceof Warrior warrior) {
+            if (warrior.takeDamage()) board.removePiece(target);
+        }
+        else board.removePiece(target);
         return captured;
+    }
+
+    @Override
+    public List<Position> getTargets(Board board) {
+        return getShootTargets(board);
     }
 
     @Override
