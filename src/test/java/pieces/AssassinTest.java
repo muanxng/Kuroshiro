@@ -28,13 +28,7 @@ public class AssassinTest {
         for (int[] first : legalMoves){
             assertTrue(a.getLegalMoves(board).contains(new Position(first[0],first[1])));
         }
-    }
-
-    @Test
-    void moveExceedTest() {
-        Assassin a = new Assassin(Color.WHITE, new Position(4,4));
-        board.placePiece(a);
-        assertFalse(a.getLegalMoves(board).contains(new Position(4,4)));
+        assertEquals(8,a.getLegalMoves(board).size());
     }
 
     @Test

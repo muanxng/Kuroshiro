@@ -6,6 +6,8 @@ import core.Position;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -28,6 +30,7 @@ public class ArcherTest {
         for (int[] first : legalMoves){
             assertTrue(a.getLegalMoves(board).contains(new Position(first[0],first[1])));
         }
+        assertEquals(8,a.getLegalMoves(board).size());
     }
 
     @Test

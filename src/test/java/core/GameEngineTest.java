@@ -47,7 +47,7 @@ public class GameEngineTest {
         Warrior enemy = new Warrior(Color.BLACK, new Position(4,5));
         enemy.takeDamage();
         board.placePiece(enemy);
-        MoveResult result = engine.makeMove(new Position(4,0), new Position(4,5));
+        MoveResult result = engine.stab(new Position(4,0), new Position(4,5));
         assertTrue(result.isSuccess());
         assertNotNull(result.getCapturedPiece());
     }
@@ -58,7 +58,7 @@ public class GameEngineTest {
         Warrior enemy = new Warrior(Color.BLACK, new Position(4,5));
         enemy.takeDamage();
         board.placePiece(enemy);
-        engine.makeMove(new Position(4,0), new Position(4,5));
+        engine.stab(new Position(4,0), new Position(4,5));
         assertTrue(engine.isGameOver());
         assertEquals(Color.WHITE, engine.getWinner());
     }

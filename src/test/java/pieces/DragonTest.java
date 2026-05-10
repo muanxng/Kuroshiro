@@ -21,23 +21,15 @@ public class DragonTest {
     void setUp() { board = new Board(); }
 
     @Test
-    void moveStraightTest() {
+    void moveTest() {
         Dragon d = new Dragon(Color.WHITE, new Position(4,4));
         board.placePiece(d);
-        assertTrue(d.getLegalMoves(board).contains(new Position(0,4)));
-        assertTrue(d.getLegalMoves(board).contains(new Position(7,4)));
-        assertTrue(d.getLegalMoves(board).contains(new Position(4,0)));
-        assertTrue(d.getLegalMoves(board).contains(new Position(4,7)));
-    }
-
-    @Test
-    void moveDiagonalTest() {
-        Dragon d = new Dragon(Color.WHITE, new Position(4,4));
-        board.placePiece(d);
-        assertTrue(d.getLegalMoves(board).contains(new Position(0,0)));
-        assertTrue(d.getLegalMoves(board).contains(new Position(7,7)));
-        assertTrue(d.getLegalMoves(board).contains(new Position(1,7)));
-        assertTrue(d.getLegalMoves(board).contains(new Position(7,1)));
+        int[][] legalMoves = {{3,4},{2,4},{1,4},{0,4},{5,4},{6,4},{7,4},{4,3},{4,2},{4,1},{4,0},{4,5},{4,6},{4,7},
+                              {3,3},{2,2},{1,1},{0,0},{5,5},{6,6},{7,7},{3,5},{2,6},{1,7},{5,3},{6,2},{7,1}};
+        for (int[] first : legalMoves){
+            assertTrue(d.getLegalMoves(board).contains(new Position(first[0],first[1])));
+        }
+        assertEquals(27,d.getLegalMoves(board).size());
     }
 
     @Test

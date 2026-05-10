@@ -19,26 +19,31 @@ public class MageTest {
 
     @BeforeEach void setUp() { board = new Board(); }
 
-    @Test void movesOneSquareInAnyDirection() {
+    @Test
+    void moveTest() {
         Mage m = new Mage(Color.WHITE, new Position(4,4));
         board.placePiece(m);
-        assertEquals(8, m.getLegalMoves(board).size());
+        int[][] legalMoves = {{2,4},{3,4},{5,4},{6,4},{4,2},{4,3},{4,5},{4,6}};
+        for (int[] first : legalMoves){
+            assertTrue(m.getLegalMoves(board).contains(new Position(first[0],first[1])));
+        }
+        assertEquals(8,m.getLegalMoves(board).size());
     }
 
-    @Test void shootsStraightUpTo4Tiles() {
+    @Test void shootTest() {
+        Mage m = new Mage(Color.WHITE, new Position(4,4));
+        Warrior enemy = new Warrior(Color.BLACK, new Position(2,4));
+        board.placePiece(m);
+        board.placePiece(enemy);
+        assertTrue(m.getShootTargets(board).contains(new Position(2,4)));
+    }
+
+    @Test void shootExceedTest() {
         Mage m = new Mage(Color.WHITE, new Position(4,4));
         Warrior enemy = new Warrior(Color.BLACK, new Position(1,4));
         board.placePiece(m);
         board.placePiece(enemy);
-        assertTrue(m.getShootTargets(board).contains(new Position(1,4)));
-    }
-
-    @Test void cannotShootBeyond4Tiles() {
-        Mage m = new Mage(Color.WHITE, new Position(7,4));
-        Warrior enemy = new Warrior(Color.BLACK, new Position(0,4));
-        board.placePiece(m);
-        board.placePiece(enemy);
-        assertFalse(m.getShootTargets(board).contains(new Position(0,4)));
+        assertFalse(m.getShootTargets(board).contains(new Position(1,4)));
     }
 
     @Test void shotBlockedByAllyPiece() {

@@ -29,6 +29,7 @@ public class ArchmageTest {
         for (int[] first : legalMoves){
             assertTrue(a.getLegalMoves(board).contains(new Position(first[0],first[1])));
         }
+        assertEquals(8,a.getLegalMoves(board).size());
     }
 
     @Test
