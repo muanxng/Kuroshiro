@@ -4,39 +4,40 @@ import core.*;
 import java.util.*;
 
 /**
- * Represents an Assassin piece on the game board.
- * The Assassin is a highly mobile melee unit that can jump diagonally up to 4 squares
- * in any direction. Similar to a standard chess Knight, it leaps over any intervening
- * pieces along its path and captures by landing directly on an enemy piece.
+ * Represents an Assassin piece within the Kuroshiro engine.
+ * The Assassin is a highly mobile melee unit that moves and attacks diagonally
+ * up to 2 squares away. Similar to a standard chess Knight, its movement is a "leap",
+ * meaning it completely ignores any intervening pieces along its path and captures
+ * by landing directly on an enemy square.
  */
 public class Assassin extends Piece implements Stabbable {
 
-    /** The 4 diagonal directional offsets for movement and jumping. */
+    /** The 4 diagonal directional vectors (offsets) for movement and jumping. */
     private static final int[][] DIAGONAL_DIRS = {
             {-1,-1},{-1,1},{1,-1},{1,1}
     };
 
-    /** The maximum number of squares the Assassin can leap in a single move. */
+    /** The maximum number of squares the Assassin can leap in a single trajectory. */
     private static final int JUMP_RANGE = 2;
 
     /**
      * Initializes a new Assassin piece.
      *
-     * @param color the color of the Assassin
-     * @param position the initial starting position
+     * @param color the {@link Color} of the Assassin
+     * @param position the initial starting {@link Position} on the board
      */
     public Assassin(Color color, Position position) {
         super(color, position);
     }
 
     /**
-     * Calculates all legal movement destinations for the Assassin.
-     * The Assassin can jump to any square along a diagonal path up to 4 squares away,
-     * completely ignoring (leaping over) any pieces in between. The landing square
-     * must be either empty or occupied by an enemy piece.
+     * Calculates all legal movement and attack destinations for the Assassin.
+     * The Assassin evaluates squares along a diagonal path up to its maximum jump range.
+     * Because it leaps, it does not check for line-of-sight blockages. A landing square
+     * is valid if it remains on the board and is either empty or occupied by an enemy.
      *
-     * @param board the current game board
-     * @return a list of valid positions the Assassin can land on
+     * @param board the current state of the game {@link Board}
+     * @return a list of valid {@link Position} coordinates the Assassin can land on
      */
     @Override
     public List<Position> getLegalMoves(Board board) {
@@ -45,7 +46,7 @@ public class Assassin extends Piece implements Stabbable {
             for (int i = 1; i <= JUMP_RANGE; i++) {
                 Position candidate = position.offset(dir[0] * i, dir[1] * i);
 
-                // Stop checking this direction if the jump goes off the board
+                // Stop checking this direction if the jump lands off the board
                 if (!candidate.isValid()) break;
 
                 // Can land on empty or enemy squares (jumps over everything in between)
@@ -58,13 +59,14 @@ public class Assassin extends Piece implements Stabbable {
     }
 
     /**
-     * Executes a stabbing melee attack on a designated target position.
-     * Since the Assassin captures by landing on its target, this method
-     * handles the immediate removal of the captured piece from the board.
+     * Executes a melee attack on a designated target position.
+     * Because the Assassin implements {@link Stabbable}, this method handles the
+     * immediate removal of the captured piece. The engine will handle moving the
+     * Assassin to this landing square afterward.
      *
-     * @param target the position being attacked and landed on
-     * @param board the current game board
-     * @return the captured piece that was removed from the board
+     * @param target the {@link Position} being attacked and landed on
+     * @param board the current state of the game {@link Board}
+     * @return the captured {@link Piece} that was removed from the board, or {@code null} if empty
      */
     @Override
     public Piece stab(Position target, Board board) {
@@ -74,7 +76,7 @@ public class Assassin extends Piece implements Stabbable {
     }
 
     /**
-     * Retrieves the visual symbol representing the Assassin on the board.
+     * Returns the unique symbol used to represent the Assassin in text-based rendering.
      *
      * @return the string "S"
      */

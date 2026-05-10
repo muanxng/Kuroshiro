@@ -24,23 +24,27 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * The primary graphical user interface for the chess game.
- * This class handles window management, rendering the board and pieces,
- * loading audio/visual assets, and processing user input via mouse clicks.
+ * The primary graphical user interface for the Kuroshiro game.
+ * This class extends the JavaFX {@link Application} and is responsible for window
+ * management, rendering the dynamic board and custom pieces, loading audio/visual assets,
+ * and translating user mouse clicks into actionable commands for the {@link GameEngine}.
  */
 public class ChessApp extends Application {
 
+    /** The standard grid size of the board (8x8). */
     private static final int BOARD_SIZE = 8;
 
+    /** The dynamic pixel size of a single board tile. */
     private double TILE = 80;
 
     // UI Color Palette
-    private static final Color LIGHT = Color.rgb(240, 217, 181);
-    private static final Color DARK = Color.rgb(181, 136, 99);
+    private static final Color LIGHT = Color.rgb(242, 242, 242);
+    private static final Color DARK = Color.rgb(176, 196, 210);
     private static final Color SELECT = Color.rgb(255, 255, 0, 0.6);
     private static final Color MOVE_HIGHLIGHT = Color.rgb(50, 200, 50, 0.5);
     private static final Color SHOOT_HIGHLIGHT = Color.rgb(255, 140, 0, 0.6);
 
+    /** In-memory cache for loaded piece sprites to prevent disk reloading. */
     private final Map<String, Image> pieceImages = new HashMap<>();
 
     // Audio assets
@@ -50,6 +54,7 @@ public class ChessApp extends Application {
 
     // UI Components
     private Button newGameButton;
+    private Button resignButton;
     private GameEngine engine;
     private Canvas canvas;
     private Label statusLabel;
@@ -60,9 +65,9 @@ public class ChessApp extends Application {
     private List<Position> shootTargets;
 
     /**
-     * The main entry point for the JavaFX application.
-     * Initializes the game engine, sets up the UI layout, loads assets,
-     * and configures event listeners for the stage and scene.
+     * The main entry point for the JavaFX application lifecycle.
+     * Initializes the core {@link GameEngine}, constructs the UI layout tree, loads assets,
+     * and configures event listeners for the primary window (Stage) and Scene.
      *
      * @param stage the primary stage for this application
      */
@@ -78,15 +83,31 @@ public class ChessApp extends Application {
         newGameButton = new Button("New Game");
         newGameButton.setFont(Font.font("Arial", FontWeight.BOLD, 14));
         newGameButton.setVisible(false);
+        newGameButton.setManaged(false);
         newGameButton.setOnAction(e -> resetGame());
+        newGameButton.setStyle("-fx-background-color: rgba(50, 140, 50, 0.8); -fx-text-fill: black; -fx-background-radius: 8;");
+
+        resignButton = new Button("Resign");
+        resignButton.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        resignButton.setVisible(true);
+        resignButton.setManaged(true);
+        resignButton.setOnAction(e -> resign());
+        resignButton.setStyle("-fx-background-color: rgba(180, 50, 50, 0.8); -fx-text-fill: black; -fx-background-radius: 8;");
+
 
         Label fullScreenLabel = new Label("Press F11 to toggle fullscreen on/off");
+        fullScreenLabel.setStyle("-fx-background-color: rgba(176, 196, 210, 0.8); -fx-text-fill: black; -fx-background-radius: 8;");
+        fullScreenLabel.setPadding(new Insets(5, 10, 5, 10));
 
-        VBox root = new VBox(canvas, statusLabel, newGameButton, fullScreenLabel);
+        VBox root = new VBox(canvas,statusLabel,resignButton,newGameButton,fullScreenLabel);
         root.setAlignment(Pos.CENTER);
         root.setSpacing(5);
         root.setPadding(new Insets(16));
-        root.setStyle("-fx-background-image: url('/images/background.png'); " + "-fx-background-size: contain; " + "-fx-background-position: center;");
+        root.setStyle("-fx-background-color: #312e2b; " +
+                "-fx-background-image: url('/images/background.png'); " +
+                "-fx-background-size: cover; " +
+                "-fx-background-position: center; " +
+                "-fx-background-repeat: no-repeat;");
 
         loadImages();
         loadSounds();
@@ -101,6 +122,8 @@ public class ChessApp extends Application {
         scene.heightProperty().addListener((obs, oldVal, newVal) -> resizeBoard(scene));
 
         stage.show();
+        stage.setMinWidth(500);
+        stage.setMinHeight(600);
         scene.setOnKeyPressed(e -> {
             if (e.getCode() == javafx.scene.input.KeyCode.F11) {
                 stage.setFullScreen(!stage.isFullScreen());
@@ -110,7 +133,8 @@ public class ChessApp extends Application {
     }
 
     /**
-     * Dynamically resizes the game board canvas to fit within the current window dimensions.
+     * Dynamically recalculates the tile size and resizes the game board canvas
+     * to ensure it remains visible within the current window dimensions.
      *
      * @param scene the active game scene containing the canvas
      */
@@ -120,7 +144,7 @@ public class ChessApp extends Application {
                 scene.getHeight() - 100
         );
 
-        available = Math.max(available, 300);
+        available = Math.max(available, 400); // minimum board size of 400px
 
         TILE = available / BOARD_SIZE;
 
@@ -131,23 +155,26 @@ public class ChessApp extends Application {
     }
 
     /**
-     * Creates and configures the label used to display turn information and game status.
+     * Creates and configures the top label used to display current turn information,
+     * move counts, and game over states.
      *
-     * @return the configured status label
+     * @return the fully styled status {@link Label}
      */
     private Label createStatusLabel() {
         Label label = new Label("White's turn");
         label.setFont(Font.font("Arial", FontWeight.BOLD, 16));
-        label.setTextFill(Color.BLACK);
+        label.setTextFill(Color.WHITE);
         label.setAlignment(Pos.CENTER);
         label.setMaxWidth(Double.MAX_VALUE);
         label.setPadding(new Insets(10));
+        label.setStyle("-fx-background-color: rgba(176, 196, 210, 0.8); -fx-background-radius: 8;");
         return label;
     }
 
     /**
-     * Loads piece images from the resources folder into the image cache.
-     * Silently catches and logs exceptions if specific images are missing.
+     * Loads transparent PNG piece sprites from the classpath resources folder into memory.
+     * If an image is missing, the application logs the error silently and falls back
+     * to text-based rendering (via {@link #drawFallbackPiece}) to prevent crashing.
      */
     private void loadImages() {
         String[] colors = {"white", "black"};
@@ -170,10 +197,27 @@ public class ChessApp extends Application {
                 }
             }
         }
+        try {
+            Image image = new Image(
+                    getClass().getResourceAsStream("/images/white_warrior_damaged.png")
+            );
+            pieceImages.put("white_warrior_damaged", image);
+        } catch (Exception ignored) {
+            System.out.println("Missing image: white_warrior_damaged");
+        }
+
+        try {
+            Image image = new Image(
+                    getClass().getResourceAsStream("/images/black_warrior_damaged.png")
+            );
+            pieceImages.put("black_warrior_damaged", image);
+        } catch (Exception ignored) {
+            System.out.println("Missing image: black_warrior_damaged");
+        }
     }
 
     /**
-     * Loads sound effect files from the resources folder.
+     * Loads MP3 sound effect files from the classpath resources folder into memory.
      * Logs missing files to the console instead of crashing the application.
      */
     private void loadSounds() {
@@ -195,8 +239,9 @@ public class ChessApp extends Application {
     }
 
     /**
-     * The main rendering loop. Clears the canvas and redraws the tiles,
-     * highlights, coordinates, and pieces based on the current engine state.
+     * The primary rendering loop for the UI. Clears the canvas and systematically
+     * redraws the tiles, highlights, algebraic coordinates, and pieces based
+     * on the current internal state of the {@link GameEngine}.
      */
     private void draw() {
         GraphicsContext g = canvas.getGraphicsContext2D();
@@ -222,16 +267,20 @@ public class ChessApp extends Application {
                 drawCoordinates(g, row, col, x, y);
             }
         }
+        if (engine.isPromotionPending()) {
+            drawPromotionOverlay(canvas.getGraphicsContext2D());
+        }
     }
 
     /**
-     * Draws a single background tile on the board.
+     * Renders a single square background tile on the board, calculating
+     * the alternating light/dark pattern based on the coordinates.
      *
-     * @param g the graphics context
-     * @param row the grid row
-     * @param col the grid column
-     * @param x the pixel x-coordinate
-     * @param y the pixel y-coordinate
+     * @param g the graphics context of the canvas
+     * @param row the 0-indexed grid row
+     * @param col the 0-indexed grid column
+     * @param x the calculated pixel x-coordinate
+     * @param y the calculated pixel y-coordinate
      */
     private void drawTile(GraphicsContext g, int row, int col, double x, double y) {
         g.setFill((row + col) % 2 == 0 ? LIGHT : DARK);
@@ -239,14 +288,14 @@ public class ChessApp extends Application {
     }
 
     /**
-     * Overlays color highlights on a tile if it is selected, a valid move destination,
-     * or a valid shooting target.
+     * Overlays transparent color highlights on a specific tile if it represents
+     * the currently selected piece, a valid movement destination, or a valid shooting target.
      *
-     * @param g the graphics context
-     * @param board the current game board
-     * @param position the grid position to check
-     * @param x the pixel x-coordinate
-     * @param y the pixel y-coordinate
+     * @param g the graphics context of the canvas
+     * @param board the current game {@link Board}
+     * @param position the grid coordinate to evaluate
+     * @param x the calculated pixel x-coordinate
+     * @param y the calculated pixel y-coordinate
      */
     private void drawHighlights(GraphicsContext g, Board board, Position position, double x, double y) {
         if (position.equals(selectedPosition)) {
@@ -272,13 +321,14 @@ public class ChessApp extends Application {
     }
 
     /**
-     * Draws algebraic coordinates (a-h, 1-8) along the edges of the board.
+     * Draws algebraic coordinates (a-h across the bottom, 1-8 down the left side)
+     * to assist players with board awareness.
      *
-     * @param g the graphics context
-     * @param row the grid row
-     * @param col the grid column
-     * @param x the pixel x-coordinate
-     * @param y the pixel y-coordinate
+     * @param g the graphics context of the canvas
+     * @param row the 0-indexed grid row
+     * @param col the 0-indexed grid column
+     * @param x the calculated pixel x-coordinate
+     * @param y the calculated pixel y-coordinate
      */
     private void drawCoordinates(GraphicsContext g, int row, int col, double x, double y) {
         g.setFont(Font.font("Arial", FontWeight.BOLD, TILE * 0.15));
@@ -295,18 +345,24 @@ public class ChessApp extends Application {
     }
 
     /**
-     * Draws a piece on the board. Will attempt to use a loaded image,
-     * but falls back to text-based rendering if the image is missing.
+     * Renders a game piece onto the board at its specified location.
+     * Attempts to fetch the loaded sprite from memory; if the sprite is missing,
+     * it delegates rendering to {@link #drawFallbackPiece(GraphicsContext, Piece, double, double)}.
      *
-     * @param g the graphics context
-     * @param piece the piece to draw
-     * @param x the pixel x-coordinate
-     * @param y the pixel y-coordinate
+     * @param g the graphics context of the canvas
+     * @param piece the {@link Piece} instance to draw
+     * @param x the calculated pixel x-coordinate
+     * @param y the calculated pixel y-coordinate
      */
     private void drawPiece(GraphicsContext g, Piece piece, double x, double y) {
         String color = piece.getColor() == core.Color.WHITE ? "white" : "black";
         String name = piece.getClass().getSimpleName().toLowerCase();
         String key = color + "_" + name;
+
+        // Use damaged image if Warrior has 1 life
+        if (piece instanceof pieces.Warrior warrior && warrior.getLives() == 1) {
+            key = color + "_warrior_damaged";
+        }
 
         Image image = pieceImages.get(key);
 
@@ -319,13 +375,14 @@ public class ChessApp extends Application {
     }
 
     /**
-     * Fallback drawing method that renders a piece using its text symbol.
-     * Applies special styling for damaged units (like Warriors).
+     * A text-based fallback drawing method used when image assets are missing.
+     * Renders the piece using its single-character text symbol and applies custom
+     * color styling (e.g., rendering damaged Warriors in red).
      *
-     * @param g the graphics context
-     * @param piece the piece to draw
-     * @param x the pixel x-coordinate
-     * @param y the pixel y-coordinate
+     * @param g the graphics context of the canvas
+     * @param piece the {@link Piece} instance to draw
+     * @param x the calculated pixel x-coordinate
+     * @param y the calculated pixel y-coordinate
      */
     private void drawFallbackPiece(GraphicsContext g, Piece piece, double x, double y) {
         String symbol = piece.getSymbol().toUpperCase();
@@ -354,16 +411,75 @@ public class ChessApp extends Application {
     }
 
     /**
-     * Handles mouse click events on the canvas, translating screen coordinates
-     * to grid positions and managing piece selection or movement actions.
+     * Renders a modal overlay on top of the board when a Warrior is awaiting promotion.
+     * Dims the background and presents clickable visual options for the upgrade.
      *
-     * @param col the clicked column index
-     * @param row the clicked row index
+     * @param g the graphics context of the canvas
+     */
+    private void drawPromotionOverlay(GraphicsContext g) {
+        // Dim the board
+        g.setFill(Color.rgb(0, 0, 0, 0.6));
+        g.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
+
+        // Draw promotion box
+        double boxWidth = TILE * 5;
+        double boxHeight = TILE * 2.5;
+        double boxX = (canvas.getWidth() - boxWidth) / 2;
+        double boxY = (canvas.getHeight() - boxHeight) / 2;
+
+        g.setFill(Color.rgb(50, 40, 30));
+        g.fillRoundRect(boxX, boxY, boxWidth, boxHeight, 20, 20);
+        g.setStroke(Color.rgb(200, 180, 120));
+        g.setLineWidth(2);
+        g.strokeRoundRect(boxX, boxY, boxWidth, boxHeight, 20, 20);
+
+        // Title
+        g.setFill(Color.WHITE);
+        g.setFont(Font.font("Arial", FontWeight.BOLD, TILE * 0.25));
+        g.fillText("Choose promotion:", boxX + TILE * 0.3, boxY + TILE * 0.5);
+
+        // Draw three piece choices
+        String[] choices = {"mage", "assassin", "archer"};
+        for (int i = 0; i < choices.length; i++) {
+            double pieceX = boxX + TILE * 0.5 + i * TILE * 1.5;
+            double pieceY = boxY + TILE * 0.7;
+
+            // Highlight box per piece
+            g.setFill(Color.rgb(255, 255, 255, 0.1));
+            g.fillRoundRect(pieceX, pieceY, TILE * 1.2, TILE * 1.2, 10, 10);
+
+            // Draw piece image or letter
+            String colorStr = engine.getPromotionColor() == core.Color.WHITE ? "white" : "black";
+            String key = colorStr + "_" + choices[i];
+            Image img = pieceImages.get(key);
+
+            if (img != null) {
+                g.drawImage(img, pieceX + 4, pieceY + 4, TILE * 1.2 - 8, TILE * 1.2 - 8);
+            } else {
+                g.setFill(Color.WHITE);
+                g.setFont(Font.font("Arial", FontWeight.BOLD, TILE * 0.5));
+                g.fillText(choices[i].substring(0, 1).toUpperCase(),
+                        pieceX + TILE * 0.35, pieceY + TILE * 0.85);
+            }
+        }
+    }
+
+    /**
+     * Intercepts and parses mouse click events on the canvas. Translates raw pixel
+     * coordinates into logical board positions and determines whether the click
+     * represents a piece selection, a move/attack command, or an action on a modal overlay.
+     *
+     * @param col the calculated grid column index that was clicked
+     * @param row the calculated grid row index that was clicked
      */
     private void handleClick(int col, int row) {
-        if (engine.isGameOver()) {
+        if (engine.isPromotionPending()) {
+            handlePromotionClick(col, row);
+            draw();
             return;
         }
+
+        if (engine.isGameOver()) return;
 
         Position clicked = new Position(row, col);
         Piece clickedPiece = engine.getBoard().getPieceAt(clicked);
@@ -388,23 +504,87 @@ public class ChessApp extends Application {
     }
 
     /**
-     * Resets the game state, clears selections, and starts a fresh match.
+     * Processes clicks exclusively within the promotion overlay box.
+     * Identifies which piece option the user selected and finalizes the promotion
+     * state within the engine.
+     *
+     * @param col the calculated grid column index that was clicked
+     * @param row the calculated grid row index that was clicked
+     */
+    private void handlePromotionClick(int col, int row) {
+        double boxWidth = TILE * 5;
+        double boxHeight = TILE * 2.5;
+        double boxX = (canvas.getWidth() - boxWidth) / 2;
+        double boxY = (canvas.getHeight() - boxHeight) / 2;
+
+        double clickX = col * TILE + TILE / 2.0;
+        double clickY = row * TILE + TILE / 2.0;
+
+        String[] choices = {"mage", "assassin", "archer"};
+        for (int i = 0; i < choices.length; i++) {
+            double pieceX = boxX + TILE * 0.5 + i * TILE * 1.5;
+            double pieceY = boxY + TILE * 0.7;
+
+            if (clickX >= pieceX && clickX <= pieceX + TILE * 1.2
+                    && clickY >= pieceY && clickY <= pieceY + TILE * 1.2) {
+
+                core.Color color = engine.getPromotionColor();
+                Position pos = engine.getPromotionPosition();
+                Piece promoted;
+
+                switch (choices[i]) {
+                    case "assassin": promoted = new pieces.Assassin(color, pos); break;
+                    case "archer":   promoted = new pieces.Archer(color, pos); break;
+                    default:         promoted = new pieces.Mage(color, pos); break;
+                }
+
+                engine.promote(promoted);
+                statusLabel.setText(engine.getCurrentTurn() + "'s turn  |  Move: " + engine.getTotalMoves());
+                return;
+            }
+        }
+    }
+
+    /**
+     * Resets the entire application state. Constructs a fresh board via {@link GameSetup},
+     * initializes a new engine instance, and resets the UI components for a new match.
      */
     private void resetGame() {
         Board board = GameSetup.createStandardBoard();
         engine = new GameEngine(board);
         clearSelection();
         newGameButton.setVisible(false);
+        newGameButton.setManaged(false);
+        resignButton.setVisible(true);
+        resignButton.setManaged(true);
         statusLabel.setText("White's turn");
         draw();
     }
 
     /**
-     * Selects a specific piece, generating the necessary UI highlights for
-     * legal moves, stabbing ranges, and shooting targets.
+     * Handles the explicit resignation of the player currently taking their turn.
+     * Immediately triggers game-over logic in the engine and updates the UI accordingly.
+     */
+    private void resign() {
+        engine.resign();
+        core.Color winner = engine.getWinner();
+        String winnerName = winner == core.Color.WHITE ? "White" : "Black";
+        statusLabel.setText(winnerName + " wins! Opponent resigned.");
+        newGameButton.setVisible(true);
+        newGameButton.setManaged(true);
+        resignButton.setVisible(false);
+        resignButton.setManaged(false);
+        if (gameOverSound != null) gameOverSound.play();
+        draw();
+    }
+
+    /**
+     * Records a valid piece selection by the active player and queries the engine
+     * to calculate and cache all necessary UI highlights (legal moves, stabbing ranges,
+     * and shooting targets).
      *
-     * @param position the position of the piece
-     * @param piece the piece being selected
+     * @param position the board coordinate of the selected piece
+     * @param piece the specifically selected {@link Piece}
      */
     private void selectPiece(Position position, Piece piece) {
         if (piece == null || piece.getColor() != engine.getCurrentTurn()) {
@@ -428,7 +608,8 @@ public class ChessApp extends Application {
     }
 
     /**
-     * Clears the current piece selection and removes all UI highlights.
+     * Purges the internal UI cache holding the currently selected piece and its
+     * corresponding legal action highlights.
      */
     private void clearSelection() {
         selectedPosition = null;
@@ -437,10 +618,11 @@ public class ChessApp extends Application {
     }
 
     /**
-     * Updates the top status label based on the outcome of a move attempt.
-     * Plays appropriate sound effects and handles win conditions.
+     * Processes the {@link MoveResult} returned from the engine after an attempted action.
+     * Updates the text label, swaps visibility of UI buttons on game over, and plays
+     * the correct audio cues for captures, moves, or victories.
      *
-     * @param result the outcome of the latest move
+     * @param result the encapsulated outcome of the player's latest action
      */
     private void updateStatus(MoveResult result) {
         if (!result.isSuccess()) {
@@ -450,6 +632,10 @@ public class ChessApp extends Application {
 
         if (result.isWon()) {
             if (gameOverSound != null) gameOverSound.play();
+            newGameButton.setVisible(true);
+            newGameButton.setManaged(true);
+            resignButton.setVisible(false);
+            resignButton.setManaged(false);
 
             core.Color winner = engine.getWinner();
             String winnerName = winner == core.Color.WHITE ? "White" : "Black";
@@ -473,10 +659,11 @@ public class ChessApp extends Application {
     }
 
     /**
-     * Extracts valid melee targets for a stabbable piece.
+     * Filters a piece's legal moves to identify squares occupied by enemy units,
+     * representing valid targets for a close-range melee attack.
      *
-     * @param piece the stabbable piece
-     * @return a list of positions containing enemy pieces within stab range
+     * @param piece the {@link Stabbable} piece querying targets
+     * @return a list of coordinates containing enemy pieces within stab range
      */
     private List<Position> getStabTargets(Piece piece) {
         List<Position> targets = new ArrayList<>();
@@ -490,10 +677,11 @@ public class ChessApp extends Application {
     }
 
     /**
-     * Retrieves valid ranged targets depending on the specific subclass of the piece.
+     * Interrogates a ranged unit to retrieve its current valid targets, routing
+     * the request to the highly specific subclasses (Mage, Archmage, Archer).
      *
-     * @param piece the shootable piece
-     * @return a list of valid target positions for a ranged attack
+     * @param piece the {@link Shootable} piece querying targets
+     * @return a list of valid target coordinates for a ranged attack
      */
     private List<Position> getShootTargets(Piece piece) {
         if (piece instanceof pieces.Mage mage) {
@@ -509,12 +697,13 @@ public class ChessApp extends Application {
     }
 
     /**
-     * Delegates an action to the game engine, determining whether a player's interaction
-     * should result in a standard move, a ranged shot, or a melee stab.
+     * The primary dispatcher for interaction logic. Evaluates the origin and destination
+     * coordinates to determine whether the action is a standard movement, a ranged shot,
+     * or a melee stab, and commands the engine to execute it.
      *
-     * @param from the starting position of the active piece
-     * @param target the destination position or attacked square
-     * @return a MoveResult representing the success or failure of the action
+     * @param from the starting board coordinate of the active piece
+     * @param target the destination coordinate or targeted square
+     * @return a {@link MoveResult} representing the success or precise failure reason of the action
      */
     private MoveResult makeMove(Position from, Position target) {
         Piece piece = engine.getBoard().getPieceAt(from);
@@ -541,9 +730,9 @@ public class ChessApp extends Application {
     }
 
     /**
-     * Static launcher method for the JavaFX framework.
+     * Static launcher method mandated by the JavaFX framework to initialize the GUI thread.
      *
-     * @param args command line arguments
+     * @param args command-line arguments provided at execution
      */
     public static void main(String[] args) {
         launch(args);

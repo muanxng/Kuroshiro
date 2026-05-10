@@ -4,14 +4,17 @@ import core.*;
 import java.util.*;
 
 /**
- * Represents a highly powerful Dragon piece on the game board.
- * The Dragon behaves similarly to a Queen in standard chess, capable of sliding
- * any number of unoccupied squares in any of the 8 orthogonal or diagonal directions.
- * It is a formidable melee unit that captures enemies by landing on them.
+ * Represents a highly powerful Dragon piece within the Kuroshiro engine.
+ * The Dragon is a formidable melee unit that behaves similarly to a standard chess Queen,
+ * capable of sliding in all 8 orthogonal and diagonal directions. However, its movement
+ * and attack range are strictly capped at a maximum of 4 squares per turn.
  */
 public class Dragon extends Piece implements Stabbable {
+
+    /** The maximum number of squares the Dragon can traverse in a single sliding move. */
     private static final int MAX_SLIDE = 4;
-    /** The 8 directional offsets (orthogonal and diagonal) used for sliding movement. */
+
+    /** The 8 directional vectors (orthogonal and diagonal) used for sliding movement. */
     private static final int[][] DIRS = {
             {-1,0},{1,0},{0,-1},{0,1},   // Orthogonal (Up, Down, Left, Right)
             {-1,-1},{-1,1},{1,-1},{1,1}  // Diagonal
@@ -20,13 +23,23 @@ public class Dragon extends Piece implements Stabbable {
     /**
      * Initializes a new Dragon piece.
      *
-     * @param color the color of the Dragon
-     * @param position the initial starting position
+     * @param color the {@link Color} of the Dragon
+     * @param position the initial starting {@link Position} on the board
      */
     public Dragon(Color color, Position position) {
         super(color, position);
     }
 
+    /**
+     * A specialized sliding mechanic that restricts the Dragon's movement range.
+     * It evaluates squares along a specified vector until it hits the board edge,
+     * encounters another piece, or reaches the {@link #MAX_SLIDE} limit.
+     *
+     * @param dr the row direction offset
+     * @param dc the column direction offset
+     * @param board the current state of the game {@link Board}
+     * @return a list of valid {@link Position} coordinates along the limited path
+     */
     private List<Position> slideLimited(int dr, int dc, Board board) {
         List<Position> moves = new ArrayList<>();
         Position current = position.offset(dr, dc);
@@ -44,18 +57,19 @@ public class Dragon extends Piece implements Stabbable {
         }
         return moves;
     }
+
     /**
-     * Calculates all legal movement destinations for the Dragon.
-     * The Dragon slides continuously in all 8 directions until it reaches the edge of the board,
-     * an allied piece, or an enemy piece (which it can capture).
+     * Calculates all legal movement and attack destinations for the Dragon.
+     * The Dragon evaluates all 8 directions, sliding continuously up to 4 squares
+     * until its path is obstructed.
      *
-     * @param board the current game board
-     * @return a list of valid positions the Dragon can move to or capture on
+     * @param board the current state of the game {@link Board}
+     * @return a list of valid {@link Position} coordinates the Dragon can move to or capture on
      */
     @Override
     public List<Position> getLegalMoves(Board board) {
         List<Position> moves = new ArrayList<>();
-        // Iterate through all 8 directions and use the inherited slide() method
+        // Iterate through all 8 directions and use the constrained sliding method
         for (int[] dir : DIRS) {
             moves.addAll(slideLimited(dir[0], dir[1], board));
         }
@@ -63,13 +77,13 @@ public class Dragon extends Piece implements Stabbable {
     }
 
     /**
-     * Executes a stabbing melee attack on a designated target position.
-     * The Dragon captures by landing directly on the target, so this method
-     * handles the immediate removal of the captured piece.
+     * Executes a melee attack on a designated target position.
+     * Because the Dragon implements {@link Stabbable}, it captures by physically moving
+     * to the target's square. This method handles the immediate removal of the enemy piece.
      *
-     * @param target the position being attacked
-     * @param board the current game board
-     * @return the captured piece that was removed from the board
+     * @param target the {@link Position} being attacked and landed on
+     * @param board the current state of the game {@link Board}
+     * @return the captured {@link Piece} that was removed from the board, or {@code null} if empty
      */
     @Override
     public Piece stab(Position target, Board board) {
@@ -79,7 +93,7 @@ public class Dragon extends Piece implements Stabbable {
     }
 
     /**
-     * Retrieves the visual symbol representing the Dragon on the board.
+     * Returns the unique symbol used to represent the Dragon in text-based rendering.
      *
      * @return the string "D"
      */

@@ -4,32 +4,30 @@ import core.*;
 import java.util.*;
 
 /**
- * Represents an Archer piece on the game board.
- * The Archer can move one square in any direction (to empty squares only)
- * and can perform ranged shooting attacks diagonally up to 3 squares away.
+ * Represents an Archer piece in the Kuroshiro engine.
+ * The Archer is a mobile ranged unit that moves diagonally up to two squares (empty squares only)
+ * and performs ranged attacks diagonally up to 2 squares away.
  */
 public class Archer extends Piece implements Shootable {
 
-    /** The 8 adjacent directional offsets for standard movement. */
+    /** The diagonal directional offsets for standard movement and shooting. */
     private static final int[][] MOVE_DIRS = {
-            {-1,-1},{-1,1},
-
-            { 1,-1},{ 1,1}
+            {-1,-1},{-1,1}, { 1,-1},{ 1,1}
     };
 
-    /** The 4 diagonal directional offsets used for ranged shooting attacks. */
+    /** The diagonal directional offsets used for ranged shooting attacks. */
     private static final int[][] SHOOT_DIRS = {
-            {-1,-1},{-1,1},{1,-1},{1,1}
+            {-1,-1},{-1,1}, {1,-1},{1,1}
     };
 
-    /** The maximum distance in squares the Archer can shoot. */
+    /** The maximum distance in squares the Archer can shoot (updated to 2). */
     private static final int SHOOT_RANGE = 2;
 
     /**
-     * Initializes a new Archer piece.
+     * Initializes a new Archer piece with a specified color and position.
      *
-     * @param color the color of the Archer
-     * @param position the initial starting position
+     * @param color the color of the Archer (WHITE or BLACK)
+     * @param position the initial starting position on the board
      */
     public Archer(Color color, Position position) {
         super(color, position);
@@ -37,11 +35,11 @@ public class Archer extends Piece implements Shootable {
 
     /**
      * Calculates all legal movement destinations for the Archer.
-     * The Archer can move one square in any of the 8 directions, but
-     * strictly to unoccupied squares (it cannot capture via movement).
+     * The Archer can move 1 or 2 squares diagonally, but only if the path
+     * consists strictly of unoccupied squares.
      *
      * @param board the current game board
-     * @return a list of valid, empty positions the Archer can move to
+     * @return a list of valid, empty diagonal positions the Archer can move to
      */
     @Override
     public List<Position> getLegalMoves(Board board) {
@@ -57,12 +55,11 @@ public class Archer extends Piece implements Shootable {
     }
 
     /**
-     * Calculates all valid targets the Archer can currently shoot.
-     * The Archer scans diagonally up to its maximum range, stopping at the first
-     * piece it encounters. If that piece is an enemy, it becomes a valid target.
+     * Identifies all valid enemy targets within the Archer's diagonal range.
+     * The Archer scans up to 2 squares away; line-of-sight is blocked by the first piece encountered.
      *
      * @param board the current game board
-     * @return a list of valid target positions
+     * @return a list of positions containing enemy pieces within range
      */
     public List<Position> getShootTargets(Board board) {
         List<Position> targets = new ArrayList<>();
@@ -74,7 +71,7 @@ public class Archer extends Piece implements Shootable {
                 Piece target = board.getPieceAt(current);
                 if (target != null) {
                     if (target.getColor() != this.color) targets.add(current);
-                    break; // Line of sight is blocked by the first piece hit
+                    break;
                 }
             }
         }
@@ -82,15 +79,13 @@ public class Archer extends Piece implements Shootable {
     }
 
     /**
-     * Executes a ranged attack on a designated target position.
-     * If the target is a {@link Warrior}, it applies damage and only removes the
-     * Warrior if the damage is fatal. For all other pieces, the target is
-     * immediately captured and removed from the board.
+     * Executes a ranged attack on a target position.
+     * If the target is a {@link Warrior}, it applies damage. For all other pieces,
+     * the target is immediately captured.
      *
      * @param target the position to shoot at
      * @param board the current game board
-     * @return the captured piece if it was removed, or the damaged piece if it survived;
-     * returns null if the target was invalid
+     * @return the piece that was hit (damaged or captured)
      */
     public Piece shoot(Position target, Board board) {
         if (!getShootTargets(board).contains(target)) return null;
@@ -109,11 +104,10 @@ public class Archer extends Piece implements Shootable {
     }
 
     /**
-     * Fulfills the {@link Shootable} interface requirement by providing
-     * the list of valid shooting targets.
+     * Implementation of the {@link Shootable} interface to provide valid targets.
      *
      * @param board the current game board
-     * @return a list of valid target positions
+     * @return a list of positions valid for a shooting attack
      */
     @Override
     public List<Position> getTargets(Board board) {
@@ -121,9 +115,9 @@ public class Archer extends Piece implements Shootable {
     }
 
     /**
-     * Retrieves the visual symbol representing the Archer on the board.
+     * Returns the unique symbol used to represent the Archer in text-based rendering.
      *
-     * @return the string "A"
+     * @return the character "A"
      */
     @Override
     public String getSymbol() { return "A"; }

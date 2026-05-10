@@ -1,29 +1,31 @@
 package core;
 
 /**
- * Encapsulates the outcome of an attempted move or action within the game.
- * This class provides details on whether the move was successful, if any piece
- * was captured, and whether the move resulted in a game-winning state.
+ * Encapsulates the complete outcome of an attempted action (move, shoot, or stab)
+ * within the Kuroshiro game engine.
+ * This immutable class provides the UI and engine with precise details on whether the
+ * action was successful, what piece (if any) was captured, and if the action triggered
+ * a game-ending condition.
  */
 public class MoveResult {
 
     /**
-     * Represents the specific status or reason for a move's outcome.
+     * Represents the specific state or error code resulting from an action attempt.
      */
     public enum Status {
-        /** The move was executed successfully. */
+        /** The action was validated and executed successfully. */
         SUCCESS,
 
-        /** The move is not allowed by the piece's movement rules. */
+        /** The action violated the acting piece's movement or targeting rules. */
         INVALID_MOVE,
 
-        /** No piece was found at the starting position. */
+        /** No valid piece was found at the specified starting coordinate. */
         NO_PIECE_SELECTED,
 
-        /** An attempt was made to move a piece belonging to the opponent. */
+        /** An attempt was made to manipulate a piece belonging to the inactive player. */
         WRONG_TURN,
 
-        /** The action cannot be performed because the game has already ended. */
+        /** The action was rejected because the match has already concluded. */
         GAME_OVER
     }
 
@@ -32,64 +34,65 @@ public class MoveResult {
     private final boolean isWon;
 
     /**
-     * Constructs a new MoveResult with the specified details.
+     * Internal constructor for creating a move result.
+     * Use static factory methods {@link #success} and {@link #failure} for instantiation.
      *
-     * @param status the outcome status of the move
-     * @param capturedPiece the piece that was captured, or null if none
-     * @param isWon true if this move won the game, false otherwise
+     * @param status the outcome status of the action
+     * @param capturedPiece the piece captured or damaged during the action, or {@code null} if none
+     * @param isWon {@code true} if this action triggered a victory
      */
-    public MoveResult(Status status, Piece capturedPiece, boolean isWon) {
+    private MoveResult(Status status, Piece capturedPiece, boolean isWon) {
         this.status = status;
         this.capturedPiece = capturedPiece;
         this.isWon = isWon;
     }
 
     /**
-     * Creates a successful MoveResult.
+     * Static factory method to generate a successful move outcome.
      *
-     * @param captured the piece captured during the move, or null if no capture occurred
-     * @param won true if the move triggered a win condition
-     * @return a MoveResult representing a successful action
+     * @param captured the {@link Piece} captured/damaged during the move, or {@code null} if no interaction occurred
+     * @param won {@code true} if the move triggered the final win condition
+     * @return a {@code MoveResult} representing a successful action
      */
     public static MoveResult success(Piece captured, boolean won) {
         return new MoveResult(Status.SUCCESS, captured, won);
     }
 
     /**
-     * Creates a failed MoveResult with a specific error status.
+     * Static factory method to generate a failed move outcome with a specific error code.
      *
-     * @param status the reason for the failure (e.g., INVALID_MOVE, WRONG_TURN)
-     * @return a MoveResult representing a failed action
+     * @param status the reason for the failure (e.g., {@link Status#INVALID_MOVE})
+     * @return a {@code MoveResult} representing a rejected action
      */
     public static MoveResult failure(Status status) {
         return new MoveResult(status, null, false);
     }
 
     /**
-     * Retrieves the status of the move.
+     * Retrieves the execution status of the attempted action.
      *
-     * @return the move's status enum
+     * @return the relevant {@link Status} enum
      */
     public Status getStatus()       { return status; }
 
     /**
-     * Retrieves the piece that was captured during this move, if any.
+     * Retrieves the piece that was affected (captured or damaged) during this action.
      *
-     * @return the captured Piece, or null if no piece was captured
+     * @return the affected {@link Piece}, or {@code null} if the action targeted an empty square
      */
     public Piece getCapturedPiece() { return capturedPiece; }
 
     /**
-     * Checks if the move was successful.
+     * Convenience method to check if the action was executed successfully.
      *
-     * @return true if the status is SUCCESS, false otherwise
+     * @return {@code true} if the status is {@link Status#SUCCESS}, {@code false} otherwise
      */
     public boolean isSuccess()      { return status == Status.SUCCESS; }
 
     /**
-     * Checks if this move resulted in winning the game.
+     * Checks if this action resulted in an immediate victory.
      *
-     * @return true if the move won the game, false otherwise
+     * @return {@code true} if the action won the game, {@code false} otherwise
      */
     public boolean isWon()          { return isWon; }
 }

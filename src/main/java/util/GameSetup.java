@@ -4,15 +4,17 @@ import core.*;
 import pieces.*;
 
 /**
- * A utility class responsible for initializing the game board.
- * Provides factory methods to generate a fully populated board with pieces
- * arranged in their standard starting positions.
+ * A utility class responsible for initializing the Kuroshiro game board.
+ * This class provides static factory methods to generate a fully populated {@link Board}
+ * with all custom pieces arranged in their specific starting positions.
  */
 public class GameSetup {
 
     /**
-     * Creates a new game board and populates it with the standard starting
-     * configuration for both the White and Black players.
+     * Creates a newly instantiated game board and populates it with the standard
+     * starting configuration for both the {@link Color#WHITE} and {@link Color#BLACK} players.
+     * Black pieces are initialized at the top (rows 0 and 1), and White pieces
+     * are initialized at the bottom (rows 6 and 7).
      *
      * @return a fully initialized {@link Board} ready for gameplay
      */
@@ -29,13 +31,17 @@ public class GameSetup {
     }
 
     /**
-     * Helper method that places a complete set of pieces for a single player.
-     * It arranges the specialized back-row units (Archers, Assassins, Mages, Dragon, Archmage)
-     * and generates a frontline of Warriors on the adjacent pawn row.
+     * A helper method that places a complete set of pieces for a single player.
+     * It arranges the specialized back-row units and generates a protective frontline
+     * of {@link Warrior}s on the adjacent pawn row.
+     * <p>
+     * The specific back-row layout from left to right (columns 0 to 7) is:
+     * {@link Assassin}, {@link Archer}, {@link Mage}, {@link Dragon},
+     * {@link Archmage}, {@link Mage}, {@link Archer}, {@link Assassin}.
      *
-     * @param board the game board being populated
-     * @param color the color of the pieces being placed
-     * @param backRow the row index (0 or 7) where the primary units are placed
+     * @param board the game {@link Board} being populated
+     * @param color the {@link Color} of the pieces being placed
+     * @param backRow the row index (0 for Black, 7 for White) where the primary units are placed
      */
     private static void setupPieces(Board board, Color color, int backRow) {
 
@@ -51,8 +57,6 @@ public class GameSetup {
         board.placePiece(new Mage(color,     new Position(backRow, 5)));
         board.placePiece(new Archer(color,   new Position(backRow, 6)));
         board.placePiece(new Assassin(color, new Position(backRow, 7)));
-
-
 
         // Place the frontline of 8 Warriors
         for (int col = 0; col < 8; col++) {

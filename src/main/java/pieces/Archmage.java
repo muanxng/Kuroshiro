@@ -4,37 +4,36 @@ import core.*;
 import java.util.*;
 
 /**
- * Represents an Archmage piece on the game board.
- * The Archmage can move one square in any direction to an empty space.
- * It possesses a powerful ranged magic attack that strikes in straight orthogonal lines
- * (up, down, left, right) over any distance, but this ability is constrained by a cooldown system.
+ * Represents an Archmage piece within the Kuroshiro engine.
+ * The Archmage is an upgraded magic caster with limited mobility (moving one square
+ * in any direction to empty spaces only) but possessing a devastating ranged attack.
+ * Its magic strikes in straight orthogonal lines over an infinite distance, but is
+ * balanced by a strict cooldown system.
  */
 public class Archmage extends Piece implements Shootable {
 
-    /** The 8 adjacent directional offsets for standard movement. */
+    /** The 8 directional offsets (horizontal, vertical, diagonal) for standard movement. */
     private static final int[][] MOVE_DIRS = {
             {-1,-1},{-1,0},{-1,1},
             { 0,-1},        { 0,1},
             { 1,-1},{ 1,0},{ 1,1}
     };
 
-    /** The 4 orthogonal directional offsets used for the magic shooting attack. */
+    /** The 4 orthogonal directional offsets (up, down, left, right) used for the magic attack. */
     private static final int[][] SHOOT_DIRS = {
-            {-1, 0},
-            { 1, 0},
-            { 0,-1},
-            { 0, 1}
+            {-1, 0}, { 1, 0}, { 0,-1}, { 0, 1}
     };
 
-    /** The number of turns remaining before the Archmage can use its magic attack again. */
+    /** The number of turns remaining before the Archmage can cast its magic attack again. */
     private int magicCooldown;
 
     /**
      * Initializes a new Archmage piece.
-     * The magic attack is available immediately upon creation (cooldown is 0).
+     * The magic attack is fully charged and available immediately upon creation
+     * (the initial cooldown is set to 0).
      *
-     * @param color the color of the Archmage
-     * @param position the initial starting position
+     * @param color the {@link Color} of the Archmage
+     * @param position the initial starting {@link Position} on the board
      */
     public Archmage(Color color, Position position) {
         super(color, position);
@@ -43,11 +42,11 @@ public class Archmage extends Piece implements Shootable {
 
     /**
      * Calculates all legal movement destinations for the Archmage.
-     * The Archmage can move one square in any of the 8 directions, but
-     * strictly to unoccupied squares (it cannot capture via movement).
+     * The Archmage moves similarly to a standard King (one square in any of the 8 directions),
+     * but strictly to unoccupied squares. It cannot capture enemies via physical movement.
      *
-     * @param board the current game board
-     * @return a list of valid, empty positions the Archmage can move to
+     * @param board the current state of the game {@link Board}
+     * @return a list of valid, empty {@link Position} coordinates the Archmage can step to
      */
     @Override
     public List<Position> getLegalMoves(Board board) {
@@ -60,13 +59,13 @@ public class Archmage extends Piece implements Shootable {
     }
 
     /**
-     * Calculates all valid targets the Archmage can currently strike with magic.
-     * If the magic is on cooldown, this returns an empty list. Otherwise, it scans
-     * orthogonally outward until it hits the first piece in each direction.
-     * If that piece is an enemy, it becomes a valid target.
+     * Identifies all valid enemy targets the Archmage can currently strike with magic.
+     * If the ability is on cooldown, this immediately returns an empty list. Otherwise,
+     * it casts rays orthogonally outward until it hits the first piece in each direction.
+     * If that piece belongs to the opponent, it is added as a valid target.
      *
-     * @param board the current game board
-     * @return a list of valid target positions
+     * @param board the current state of the game {@link Board}
+     * @return a list of {@link Position} coordinates containing valid enemy targets
      */
     public List<Position> getShootTargets(Board board) {
         List<Position> targets = new ArrayList<>();
@@ -78,7 +77,7 @@ public class Archmage extends Piece implements Shootable {
                 Piece target = board.getPieceAt(current);
                 if (target != null) {
                     if (target.getColor() != this.color) targets.add(current);
-                    break; // Line of sight is blocked by the first piece hit
+                    break;
                 }
                 current = current.offset(dir[0], dir[1]);
             }
@@ -87,15 +86,15 @@ public class Archmage extends Piece implements Shootable {
     }
 
     /**
-     * Executes the ranged magic attack on a designated target position.
+     * Executes the infinite-range magic attack on a designated target position.
      * Successfully firing the magic puts the ability on a 4-turn cooldown.
-     * If the target is a {@link Warrior}, it applies damage. For all other pieces,
+     * If the target is a {@link Warrior}, it applies a damage state. For all other piece types,
      * the target is immediately captured and removed from the board.
      *
-     * @param target the position to shoot at
-     * @param board the current game board
-     * @return the captured piece if it was removed, or the damaged piece if it survived;
-     * returns null if the target was invalid or magic is on cooldown
+     * @param target the {@link Position} to shoot at
+     * @param board the current state of the game {@link Board}
+     * @return the {@link Piece} that was captured or damaged, or {@code null} if the target
+     * was invalid or the magic is currently on cooldown
      */
     public Piece shoot(Position target, Board board) {
         if (!canUseMagic()) return null;
@@ -119,8 +118,8 @@ public class Archmage extends Piece implements Shootable {
      * Fulfills the {@link Shootable} interface requirement by providing
      * the list of valid magic targets.
      *
-     * @param board the current game board
-     * @return a list of valid target positions
+     * @param board the current state of the game {@link Board}
+     * @return a list of valid target {@link Position} coordinates
      */
     @Override
     public List<Position> getTargets(Board board) {
@@ -128,29 +127,29 @@ public class Archmage extends Piece implements Shootable {
     }
 
     /**
-     * Checks if the Archmage's magic attack is ready to use.
+     * Evaluates if the Archmage's magic attack is fully recharged and ready to fire.
      *
-     * @return true if the cooldown is 0, false otherwise
+     * @return {@code true} if the cooldown is at 0, {@code false} otherwise
      */
     public boolean canUseMagic()      { return magicCooldown == 0; }
 
     /**
-     * Retrieves the current number of turns remaining on the magic cooldown.
+     * Retrieves the current number of turns remaining on the magic cooldown timer.
      *
-     * @return the current cooldown value
+     * @return the current cooldown integer value
      */
     public int getMagicCooldown()     { return magicCooldown; }
 
     /**
-     * Reduces the magic cooldown by one turn, stopping at 0.
-     * This should typically be called at the end of a turn cycle.
+     * Decrements the magic cooldown timer by one turn, clamping at a minimum of 0.
+     * This method is typically invoked by the engine at the end of a turn cycle.
      */
     public void decrementCooldown() {
         if (magicCooldown > 0) magicCooldown--;
     }
 
     /**
-     * Retrieves the visual symbol representing the Archmage on the board.
+     * Returns the unique symbol used to represent the Archmage in text-based rendering.
      *
      * @return the string "X"
      */

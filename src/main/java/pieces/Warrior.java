@@ -4,22 +4,26 @@ import core.*;
 import java.util.*;
 
 /**
- * Represents a Warrior piece on the game board.
- * The Warrior moves similarly to a standard chess Pawn: moving forward one square,
- * with the option to move two squares on its first turn, and capturing diagonally.
- * Uniquely, the Warrior acts as a "tank" with a health pool of 2 lives, requiring
- * multiple ranged attacks to be defeated.
+ * Represents a Warrior piece within the Kuroshiro engine.
+ * The Warrior serves as the frontline infantry. Its movement closely mirrors a standard
+ * chess Pawn: advancing forward one square into empty spaces, with the option to move
+ * two squares strictly on its first turn, and capturing enemy pieces one square diagonally forward.
+ * <p>
+ * Uniquely, the Warrior acts as a "tank" with a resilient health pool of 2 lives.
+ * It can withstand one ranged attack without dying, requiring subsequent damage to be fully defeated.
+ * Note: Melee attacks (stabs) and standard movement captures bypass this health pool
+ * and capture the Warrior instantly.
  */
 public class Warrior extends Piece implements Stabbable {
 
-    /** The current health/lives of the Warrior. Starts at 2. */
+    /** The current health/lives of the Warrior. Always initializes at 2. */
     private int lives;
 
     /**
-     * Initializes a new Warrior piece with full health (2 lives).
+     * Initializes a new Warrior piece with full health.
      *
-     * @param color the color of the Warrior
-     * @param position the initial starting position
+     * @param color the {@link Color} of the Warrior
+     * @param position the initial starting {@link Position} on the board
      */
     public Warrior(Color color, Position position) {
         super(color, position);
@@ -27,18 +31,18 @@ public class Warrior extends Piece implements Stabbable {
     }
 
     /**
-     * Calculates all legal movement destinations for the Warrior.
-     * Moves strictly forward one square (or two on its very first move) into empty spaces.
-     * Captures are made strictly by moving one square diagonally forward.
-     * The forward direction depends on the piece's color.
+     * Calculates all legal movement and capture destinations for the Warrior.
+     * The forward direction is determined by the piece's color (White moves "up" the board,
+     * Black moves "down"). The Warrior can move straight forward to empty squares, and
+     * diagonally forward to squares occupied by an enemy.
      *
-     * @param board the current game board
-     * @return a list of valid positions the Warrior can move to or capture on
+     * @param board the current state of the game {@link Board}
+     * @return a list of valid {@link Position} coordinates the Warrior can step to or capture on
      */
     @Override
     public List<Position> getLegalMoves(Board board) {
         List<Position> moves = new ArrayList<>();
-        // White moves "up" the board (-1), Black moves "down" (+1)
+        // White moves "up" the board (-1 rank), Black moves "down" (+1 rank)
         int dir = (color == Color.WHITE) ? -1 : 1;
 
         // Forward one square
@@ -50,8 +54,6 @@ public class Warrior extends Piece implements Stabbable {
                 Position two = position.offset(dir * 2, 0);
                 if (isEmpty(two, board)) moves.add(two);
             }
-
-
         }
 
         // Diagonal captures
@@ -66,9 +68,9 @@ public class Warrior extends Piece implements Stabbable {
     }
 
     /**
-     * Inflicts one point of damage to the Warrior, reducing its lives by one.
+     * Inflicts one point of damage to the Warrior, simulating a ranged attack hit.
      *
-     * @return true if the damage was fatal (lives reached 0), false otherwise
+     * @return {@code true} if the damage was fatal (lives reached 0), {@code false} if the Warrior survived
      */
     public boolean takeDamage() {
         lives--;
@@ -78,24 +80,25 @@ public class Warrior extends Piece implements Stabbable {
     /**
      * Retrieves the current number of lives the Warrior has remaining.
      *
-     * @return the remaining lives
+     * @return the remaining health value
      */
     public int getLives() { return lives; }
 
     /**
-     * Checks if the Warrior is still alive.
+     * Evaluates if the Warrior is still alive and active on the board.
      *
-     * @return true if lives are greater than 0, false otherwise
+     * @return {@code true} if lives are greater than 0, {@code false} otherwise
      */
     public boolean isAlive() { return lives > 0; }
 
     /**
-     * Executes a stabbing melee attack on a designated target position.
-     * The Warrior captures by landing directly on the target.
+     * Executes a melee attack on a designated target position.
+     * Because the Warrior implements {@link Stabbable}, it captures by physically moving
+     * to the target's square. This method handles the immediate removal of the enemy piece.
      *
-     * @param target the position being attacked
-     * @param board the current game board
-     * @return the captured piece that was removed from the board
+     * @param target the {@link Position} being attacked and landed on
+     * @param board the current state of the game {@link Board}
+     * @return the captured {@link Piece} that was removed from the board, or {@code null} if empty
      */
     @Override
     public Piece stab(Position target, Board board) {
@@ -105,10 +108,10 @@ public class Warrior extends Piece implements Stabbable {
     }
 
     /**
-     * Retrieves the visual symbol representing the Warrior on the board.
-     * The symbol dynamically changes based on the Warrior's current health.
+     * Returns the unique symbol used to represent the Warrior in text-based rendering.
+     * This symbol dynamically shifts based on the Warrior's current health pool.
      *
-     * @return "W" if the Warrior is at full health, "w" if it has taken damage
+     * @return the string "W" if the Warrior is at full health, or "w" if it has taken damage
      */
     @Override
     public String getSymbol() { return lives == 2 ? "W" : "w"; }
