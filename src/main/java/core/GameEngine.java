@@ -5,8 +5,9 @@ import pieces.Archmage;
 import java.util.List;
 
 /**
- * The core engine of the game responsible for managing game state, turn progression,
- * move validation, and specific combat actions like shooting and stabbing.
+ * The core engine of the Kuroshiro game, responsible for managing the central game state.
+ * This includes turn progression, move validation, ability cooldowns,
+ * specialized combat actions (shooting/stabbing), and Pawn-style promotions.
  */
 public class GameEngine {
 
@@ -15,16 +16,15 @@ public class GameEngine {
     private boolean gameOver;
     private Color winner;
     private int totalMoves;
-    private java.util.function.Function<Color, Piece> promotionCallback;
     private boolean promotionPending = false;
     private core.Color promotionColor;
     private Position promotionPosition;
 
     /**
-     * Initializes a new GameEngine with the specified board.
-     * The game starts with the WHITE player's turn.
+     * Initializes a new GameEngine with the specified board configuration.
+     * By default, the game starts with the {@link Color#WHITE} player's turn.
      *
-     * @param board the game board to be used for this engine instance
+     * @param board the game board to be managed by this engine instance
      */
     public GameEngine(Board board) {
         this.board = board;
@@ -35,10 +35,12 @@ public class GameEngine {
     }
 
     /**
-     * Attempts to perform a standard move for a piece from one position to another.
-     * * @param from the starting position of the piece to move
-     * @param to the destination position
-     * @return a {@link MoveResult} indicating success or the specific reason for failure
+     * Attempts to perform a standard non-combat movement for a piece.
+     * Validates turn order, piece ownership, and move legality before executing.
+     *
+     * @param from the starting coordinate of the piece to move
+     * @param to the target destination coordinate
+     * @return a {@link MoveResult} indicating a successful move, or the specific reason for failure
      */
     public MoveResult makeMove(Position from, Position to) {
         if (gameOver) return MoveResult.failure(MoveResult.Status.GAME_OVER);
@@ -62,12 +64,12 @@ public class GameEngine {
     }
 
     /**
-     * Executes a melee stab action if the piece at the starting position implements {@link Stabbable}.
-     * This moves the attacking piece to the target position upon a successful stab.
+     * Executes a melee action if the acting piece implements {@link Stabbable}.
+     * A successful stab instantly captures the target and moves the attacker to the target's square.
      *
-     * @param shooterPos the current position of the attacking piece
-     * @param target the target position to stab
-     * @return a {@link MoveResult} detailing the outcome of the action
+     * @param shooterPos the current coordinate of the attacking piece
+     * @param target the coordinate of the enemy to stab
+     * @return a {@link MoveResult} detailing the success or failure of the stab action
      */
     public MoveResult stab(Position shooterPos, Position target) {
 
@@ -100,12 +102,13 @@ public class GameEngine {
     }
 
     /**
-     * Executes a ranged shoot action if the piece at the starting position implements {@link Shootable}.
-     * A shooting attack does not move the attacking piece.
+     * Executes a ranged attack if the acting piece implements {@link Shootable}.
+     * Unlike moving or stabbing, a successful shoot action damages/captures the target
+     * without altering the attacking piece's position on the board.
      *
-     * @param shooterPos the current position of the shooting piece
-     * @param target the targeted position to shoot at
-     * @return a {@link MoveResult} detailing the outcome of the action
+     * @param shooterPos the current coordinate of the shooting piece
+     * @param target the coordinate of the target being shot at
+     * @return a {@link MoveResult} detailing the outcome of the attack
      */
     public MoveResult shoot(Position shooterPos, Position target) {
 
@@ -136,56 +139,57 @@ public class GameEngine {
     }
 
     /**
-     * Retrieves all valid and safe moves for a given piece on the current board.
+     * Retrieves all legal movement destinations for a specific piece on the current board layout.
      *
-     * @param piece the piece to check
-     * @return a list of legal destination positions
+     * @param piece the piece to evaluate
+     * @return a list of safe, valid {@link Position} coordinates
      */
     public List<Position> getSafeMoves(Piece piece) {
         return piece.getLegalMoves(board);
     }
 
     /**
-     * Gets the color of the player whose turn it currently is.
+     * Returns the color of the player whose turn it currently is.
      *
-     * @return the current turn's color
+     * @return the active turn's {@link Color}
      */
     public Color getCurrentTurn() { return currentTurn; }
 
     /**
-     * Checks if the game has concluded.
+     * Evaluates if the game has reached an end state.
      *
-     * @return true if the game is over, false otherwise
+     * @return {@code true} if the game has concluded, {@code false} if it is ongoing
      */
     public boolean isGameOver()   { return gameOver; }
 
     /**
-     * Gets the winning color, if the game is over.
+     * Returns the player who won the game.
      *
-     * @return the winning color, or null if the game is still ongoing
+     * @return the winning {@link Color}, or {@code null} if the match is unresolved
      */
     public Color getWinner()      { return winner; }
 
     /**
-     * Retrieves the current game board.
+     * Provides direct access to the current state of the game board.
      *
-     * @return the board instance
+     * @return the active {@link Board} instance
      */
     public Board getBoard()       { return board; }
 
     /**
-     * Gets the total number of valid moves or actions made in the game so far.
+     * Returns the total number of actions (moves, stabs, shoots) executed in the match.
      *
-     * @return the total move count
+     * @return the aggregate move count
      */
     public int getTotalMoves()    { return totalMoves; }
 
     /**
-     * Handles end-of-turn logic, including checking for win conditions
-     * and passing the turn to the opposing player.
+     * Processes end-of-turn mechanics.
+     * This method evaluates win conditions (total annihilation) and officially
+     * passes control to the opposing player, unless a promotion action is pending.
      *
-     * @param captured the piece that was captured during the turn, if any
-     * @return a successful {@link MoveResult} containing the captured piece and game over status
+     * @param captured the piece captured during the turn, or {@code null} if none
+     * @return a finalized {@link MoveResult} reflecting the turn's conclusion
      */
     private MoveResult finishTurn(Piece captured) {
         Color opponent = currentTurn.opposite();
@@ -200,7 +204,8 @@ public class GameEngine {
     }
 
     /**
-     * Decrements ability cooldowns for pieces belonging to the current player.
+     * Cycles through all pieces owned by the current player and decrements active cooldowns
+     * (e.g., reducing the Archmage's infinite-range attack timer).
      */
     private void decrementCooldowns() {
         for (Piece p : board.getPieces(currentTurn)) {
@@ -209,23 +214,50 @@ public class GameEngine {
         }
     }
 
+    /**
+     * Checks if a moved {@link pieces.Warrior} has reached the furthest opposite rank,
+     * flagging the engine state to await a promotion selection.
+     *
+     * @param piece the piece that just completed a movement or stab action
+     */
     private void checkPromotion(Piece piece) {
         if (!(piece instanceof pieces.Warrior)) return;
         int promotionRow = piece.getColor() == Color.WHITE ? 0 : 7;
         if (piece.getPosition().getRow() != promotionRow) return;
 
-        // Don't remove yet — just flag as pending
         promotionPending = true;
         promotionColor = piece.getColor();
         promotionPosition = piece.getPosition();
     }
 
+    /**
+     * Checks if the engine is currently halted, waiting for a player to select a promotion upgrade.
+     *
+     * @return {@code true} if a promotion is pending
+     */
     public boolean isPromotionPending() { return promotionPending; }
+
+    /**
+     * Returns the color of the piece currently awaiting promotion.
+     *
+     * @return the promoting piece's {@link Color}
+     */
     public Color getPromotionColor()    { return promotionColor; }
+
+    /**
+     * Returns the board coordinate where the promotion is taking place.
+     *
+     * @return the {@link Position} of the pending promotion
+     */
     public Position getPromotionPosition() { return promotionPosition; }
 
+    /**
+     * Executes the promotion process, replacing the original piece with the selected upgrade.
+     * Upon completion, it resumes standard end-of-turn logic and passes the turn.
+     *
+     * @param promoted the newly instantiated piece chosen by the player
+     */
     public void promote(Piece promoted) {
-        // Remove the warrior now that player has chosen
         board.removePiece(promotionPosition);
         board.placePiece(promoted);
         promotionPending = false;
@@ -240,17 +272,9 @@ public class GameEngine {
         currentTurn = opponent;
     }
 
-    public void setPromotionCallback(java.util.function.Function<Color, Piece> callback) {
-        this.promotionCallback = callback;
-    }
-
-    private Piece createPromotedPiece(Piece choice, Color color, Position position) {
-        if (choice instanceof pieces.Mage)     return new pieces.Mage(color, position);
-        if (choice instanceof pieces.Assassin) return new pieces.Assassin(color, position);
-        if (choice instanceof pieces.Archer)   return new pieces.Archer(color, position);
-        return new pieces.Dragon(color, position); // default
-    }
-
+    /**
+     * Immediately ends the game and declares the opponent as the winner.
+     */
     public void resign() {
         gameOver = true;
         winner = currentTurn.opposite();

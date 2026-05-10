@@ -6,12 +6,13 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Test suite for the {@link GameSetup} utility.
- * Verifies that the board initializes correctly with the proper layout,
- * piece types, and color assignments for both the White and Black players.
+ * Unit tests for the {@link GameSetup} utility.
+ * Verifies that the game board initializes with the correct piece types,
+ * positions, and team affiliations for both players.
  */
 public class GameSetupTest {
 
+    /** Tests that the White back-row units and frontline Warriors are placed in their starting squares. */
     @Test
     void whiteTest() {
         Board board = GameSetup.createStandardBoard();
@@ -27,6 +28,7 @@ public class GameSetupTest {
             assertTrue(board.getPieceAt(new Position(6,col)) instanceof Warrior);
     }
 
+    /** Tests that the Black back-row units and frontline Warriors are placed in their starting squares. */
     @Test
     void blackTest() {
         Board board = GameSetup.createStandardBoard();
@@ -42,6 +44,7 @@ public class GameSetupTest {
             assertTrue(board.getPieceAt(new Position(1,col)) instanceof Warrior);
     }
 
+    /** Verifies that every piece in the White collection is correctly assigned the Color.WHITE attribute. */
     @Test
     void allWhitePiecesAreCorrectColor() {
         Board board = GameSetup.createStandardBoard();
@@ -49,6 +52,7 @@ public class GameSetupTest {
             assertEquals(Color.WHITE, p.getColor());
     }
 
+    /** Verifies that every piece in the Black collection is correctly assigned the Color.BLACK attribute. */
     @Test
     void allBlackPiecesAreCorrectColor() {
         Board board = GameSetup.createStandardBoard();
