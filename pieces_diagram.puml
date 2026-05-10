@@ -23,8 +23,10 @@ class pieces.Archer {
 
 
 class pieces.Dragon {
+- {static} int MAX_SLIDE
 - {static} int[][] DIRS
 + <<Create>> Dragon(Color,Position)
+- List<Position> slideLimited(int,int,Board)
 + List<Position> getLegalMoves(Board)
 + Piece stab(Position,Board)
 + String getSymbol()

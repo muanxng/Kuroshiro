@@ -66,7 +66,7 @@ public class ArchmageTest {
         assertTrue(a.canUseMagic());
         a.shoot(new Position(4,6), board);
         assertFalse(a.canUseMagic());
-        assertEquals(4, a.getMagicCooldown());
+        assertEquals(2, a.getMagicCooldown());
     }
 
     /** Tests the step-by-step decrement logic of the magic cooldown timer. */
@@ -77,13 +77,6 @@ public class ArchmageTest {
         board.placePiece(a);
         board.placePiece(enemy);
         a.shoot(new Position(4,6), board);
-
-        a.decrementCooldown();
-        assertEquals(3, a.getMagicCooldown());
-
-        a.decrementCooldown();
-        assertEquals(2, a.getMagicCooldown());
-        assertFalse(a.canUseMagic());
 
         a.decrementCooldown();
         assertEquals(1, a.getMagicCooldown());

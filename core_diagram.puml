@@ -50,6 +50,9 @@ class core.GameEngine {
 - boolean gameOver
 - Color winner
 - int totalMoves
+- boolean promotionPending
+- core.Color promotionColor
+- Position promotionPosition
 + <<Create>> GameEngine(Board)
 + MoveResult makeMove(Position,Position)
 + MoveResult stab(Position,Position)
@@ -62,6 +65,12 @@ class core.GameEngine {
 + int getTotalMoves()
 - MoveResult finishTurn(Piece)
 - void decrementCooldowns()
+- void checkPromotion(Piece)
++ boolean isPromotionPending()
++ Color getPromotionColor()
++ Position getPromotionPosition()
++ void promote(Piece)
++ void resign()
 }
 
 
@@ -91,7 +100,7 @@ class core.MoveResult {
 - Status status
 - Piece capturedPiece
 - boolean isWon
-+ <<Create>> MoveResult(Status,Piece,boolean)
+- <<Create>> MoveResult(Status,Piece,boolean)
 + {static} MoveResult success(Piece,boolean)
 + {static} MoveResult failure(Status)
 + Status getStatus()

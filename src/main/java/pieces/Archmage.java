@@ -87,7 +87,7 @@ public class Archmage extends Piece implements Shootable {
 
     /**
      * Executes the infinite-range magic attack on a designated target position.
-     * Successfully firing the magic puts the ability on a 4-turn cooldown.
+     * Successfully firing the magic puts the ability on a 2-turn cooldown.
      * If the target is a {@link Warrior}, it applies a damage state. For all other piece types,
      * the target is immediately captured and removed from the board.
      *
@@ -101,7 +101,7 @@ public class Archmage extends Piece implements Shootable {
         if (!getShootTargets(board).contains(target)) return null;
 
         Piece captured = board.getPieceAt(target);
-        magicCooldown = 4; // Trigger cooldown upon successful cast
+        magicCooldown = 2; // Trigger cooldown upon successful cast
 
         if (captured instanceof Warrior warrior) {
             if (warrior.takeDamage()) {
