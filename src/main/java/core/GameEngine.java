@@ -250,4 +250,9 @@ public class GameEngine {
         if (choice instanceof pieces.Archer)   return new pieces.Archer(color, position);
         return new pieces.Dragon(color, position); // default
     }
+
+    public void resign() {
+        gameOver = true;
+        winner = currentTurn.opposite();
+    }
 }

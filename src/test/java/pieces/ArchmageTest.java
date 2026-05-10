@@ -2,6 +2,7 @@ package pieces;
 
 import core.Board;
 import core.Color;
+import core.Piece;
 import core.Position;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,7 +25,10 @@ public class ArchmageTest {
     void moveTest() {
         Archmage a = new Archmage(Color.WHITE, new Position(4,4));
         board.placePiece(a);
-        assertEquals(8, a.getLegalMoves(board).size());
+        int[][] legalMoves = {{3,5},{4,5},{5,5},{3,4},{5,4},{3,3},{4,3},{5,3}};
+        for (int[] first : legalMoves){
+            assertTrue(a.getLegalMoves(board).contains(new Position(first[0],first[1])));
+        }
     }
 
     @Test
@@ -56,7 +60,7 @@ public class ArchmageTest {
         assertTrue(a.canUseMagic());
         a.shoot(new Position(4,6), board);
         assertFalse(a.canUseMagic());
-        assertEquals(2, a.getMagicCooldown());
+        assertEquals(4, a.getMagicCooldown());
     }
 
     @Test
@@ -66,6 +70,11 @@ public class ArchmageTest {
         board.placePiece(a);
         board.placePiece(enemy);
         a.shoot(new Position(4,6), board);
+        a.decrementCooldown();
+        assertEquals(3, a.getMagicCooldown());
+        a.decrementCooldown();
+        assertEquals(2, a.getMagicCooldown());
+        assertFalse(a.canUseMagic());
         a.decrementCooldown();
         assertEquals(1, a.getMagicCooldown());
         a.decrementCooldown();
@@ -94,6 +103,8 @@ public class ArchmageTest {
         archmage.shoot(new Position(4, 6), board);
         assertNotNull(board.getPieceAt(new Position(4, 6)));
         assertEquals(1, warrior.getLives());
+        archmage.decrementCooldown();
+        archmage.decrementCooldown();
         archmage.decrementCooldown();
         archmage.decrementCooldown();
         archmage.shoot(new Position(4, 6), board);

@@ -35,8 +35,8 @@ public class ChessApp extends Application {
     private double TILE = 80;
 
     // UI Color Palette
-    private static final Color LIGHT = Color.rgb(240, 217, 181);
-    private static final Color DARK = Color.rgb(181, 136, 99);
+    private static final Color LIGHT = Color.rgb(242, 242, 242);
+    private static final Color DARK = Color.rgb(176, 196, 210);
     private static final Color SELECT = Color.rgb(255, 255, 0, 0.6);
     private static final Color MOVE_HIGHLIGHT = Color.rgb(50, 200, 50, 0.5);
     private static final Color SHOOT_HIGHLIGHT = Color.rgb(255, 140, 0, 0.6);
@@ -50,6 +50,7 @@ public class ChessApp extends Application {
 
     // UI Components
     private Button newGameButton;
+    private Button resignButton;
     private GameEngine engine;
     private Canvas canvas;
     private Label statusLabel;
@@ -58,7 +59,6 @@ public class ChessApp extends Application {
     private Position selectedPosition;
     private List<Position> legalMoves;
     private List<Position> shootTargets;
-
 
     /**
      * The main entry point for the JavaFX application.
@@ -79,15 +79,31 @@ public class ChessApp extends Application {
         newGameButton = new Button("New Game");
         newGameButton.setFont(Font.font("Arial", FontWeight.BOLD, 14));
         newGameButton.setVisible(false);
+        newGameButton.setManaged(false);
         newGameButton.setOnAction(e -> resetGame());
+        newGameButton.setStyle("-fx-background-color: rgba(50, 140, 50, 0.8); -fx-text-fill: black; -fx-background-radius: 8;");
+
+        resignButton = new Button("Resign");
+        resignButton.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        resignButton.setVisible(true);
+        resignButton.setManaged(true);
+        resignButton.setOnAction(e -> resign());
+        resignButton.setStyle("-fx-background-color: rgba(180, 50, 50, 0.8); -fx-text-fill: black; -fx-background-radius: 8;");
+
 
         Label fullScreenLabel = new Label("Press F11 to toggle fullscreen on/off");
+        fullScreenLabel.setStyle("-fx-background-color: rgba(176, 196, 210, 0.8); -fx-text-fill: black; -fx-background-radius: 8;");
+        fullScreenLabel.setPadding(new Insets(5, 10, 5, 10));
 
-        VBox root = new VBox(canvas, statusLabel, newGameButton, fullScreenLabel);
+        VBox root = new VBox(canvas,statusLabel,resignButton,newGameButton,fullScreenLabel);
         root.setAlignment(Pos.CENTER);
         root.setSpacing(5);
         root.setPadding(new Insets(16));
-        root.setStyle("-fx-background-image: url('/images/background.png'); " + "-fx-background-size: contain; " + "-fx-background-position: center;");
+        root.setStyle("-fx-background-color: #312e2b; " +
+                "-fx-background-image: url('/images/background.png'); " +
+                "-fx-background-size: cover; " +
+                "-fx-background-position: center; " +
+                "-fx-background-repeat: no-repeat;");
 
         loadImages();
         loadSounds();
@@ -102,6 +118,8 @@ public class ChessApp extends Application {
         scene.heightProperty().addListener((obs, oldVal, newVal) -> resizeBoard(scene));
 
         stage.show();
+        stage.setMinWidth(500);
+        stage.setMinHeight(600);
         scene.setOnKeyPressed(e -> {
             if (e.getCode() == javafx.scene.input.KeyCode.F11) {
                 stage.setFullScreen(!stage.isFullScreen());
@@ -121,7 +139,7 @@ public class ChessApp extends Application {
                 scene.getHeight() - 100
         );
 
-        available = Math.max(available, 300);
+        available = Math.max(available, 400); // minimum board size of 400px
 
         TILE = available / BOARD_SIZE;
 
@@ -139,10 +157,11 @@ public class ChessApp extends Application {
     private Label createStatusLabel() {
         Label label = new Label("White's turn");
         label.setFont(Font.font("Arial", FontWeight.BOLD, 16));
-        label.setTextFill(Color.BLACK);
+        label.setTextFill(Color.WHITE);
         label.setAlignment(Pos.CENTER);
         label.setMaxWidth(Double.MAX_VALUE);
         label.setPadding(new Insets(10));
+        label.setStyle("-fx-background-color: rgba(176, 196, 210, 0.8); -fx-background-radius: 8;");
         return label;
     }
 
@@ -507,7 +526,23 @@ public class ChessApp extends Application {
         engine = new GameEngine(board);
         clearSelection();
         newGameButton.setVisible(false);
+        newGameButton.setManaged(false);
+        resignButton.setVisible(true);
+        resignButton.setManaged(true);
         statusLabel.setText("White's turn");
+        draw();
+    }
+
+    private void resign() {
+        engine.resign();
+        core.Color winner = engine.getWinner();
+        String winnerName = winner == core.Color.WHITE ? "White" : "Black";
+        statusLabel.setText(winnerName + " wins! Opponent resigned.");
+        newGameButton.setVisible(true);
+        newGameButton.setManaged(true);
+        resignButton.setVisible(false);
+        resignButton.setManaged(false);
+        if (gameOverSound != null) gameOverSound.play();
         draw();
     }
 
@@ -562,6 +597,10 @@ public class ChessApp extends Application {
 
         if (result.isWon()) {
             if (gameOverSound != null) gameOverSound.play();
+            newGameButton.setVisible(true);
+            newGameButton.setManaged(true);
+            resignButton.setVisible(false);
+            resignButton.setManaged(false);
 
             core.Color winner = engine.getWinner();
             String winnerName = winner == core.Color.WHITE ? "White" : "Black";

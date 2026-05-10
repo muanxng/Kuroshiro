@@ -24,7 +24,10 @@ public class ArcherTest {
     void moveTest() {
         Archer a = new Archer(Color.WHITE, new Position(4,4));
         board.placePiece(a);
-        assertEquals(8, a.getLegalMoves(board).size());
+        int[][] legalMoves = {{2,2},{3,3},{5,5},{6,6},{2,6},{3,5},{5,3},{6,2}};
+        for (int[] first : legalMoves){
+            assertTrue(a.getLegalMoves(board).contains(new Position(first[0],first[1])));
+        }
     }
 
     @Test
@@ -39,10 +42,10 @@ public class ArcherTest {
     @Test
     void shootExceedTest() {
         Archer a = new Archer(Color.WHITE, new Position(4,4));
-        Warrior enemy = new Warrior(Color.BLACK, new Position(0,0));
+        Warrior enemy = new Warrior(Color.BLACK, new Position(1,1));
         board.placePiece(a);
         board.placePiece(enemy);
-        assertFalse(a.getShootTargets(board).contains(new Position(0,0)));
+        assertFalse(a.getShootTargets(board).contains(new Position(1,1)));
     }
 
     @Test

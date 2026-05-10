@@ -24,10 +24,10 @@ public class AssassinTest {
     void moveTest() {
         Assassin a = new Assassin(Color.WHITE, new Position(4,4));
         board.placePiece(a);
-        assertTrue(a.getLegalMoves(board).contains(new Position(3,3)));
-        assertTrue(a.getLegalMoves(board).contains(new Position(2,2)));
-        assertTrue(a.getLegalMoves(board).contains(new Position(1,1)));
-        assertTrue(a.getLegalMoves(board).contains(new Position(0,0)));
+        int[][] legalMoves = {{2,2},{3,3},{5,5},{6,6},{2,6},{3,5},{5,3},{6,2}};
+        for (int[] first : legalMoves){
+            assertTrue(a.getLegalMoves(board).contains(new Position(first[0],first[1])));
+        }
     }
 
     @Test
