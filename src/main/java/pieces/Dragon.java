@@ -10,7 +10,7 @@ import java.util.*;
  * It is a formidable melee unit that captures enemies by landing on them.
  */
 public class Dragon extends Piece implements Stabbable {
-
+    private static final int MAX_SLIDE = 4;
     /** The 8 directional offsets (orthogonal and diagonal) used for sliding movement. */
     private static final int[][] DIRS = {
             {-1,0},{1,0},{0,-1},{0,1},   // Orthogonal (Up, Down, Left, Right)
@@ -27,6 +27,23 @@ public class Dragon extends Piece implements Stabbable {
         super(color, position);
     }
 
+    private List<Position> slideLimited(int dr, int dc, Board board) {
+        List<Position> moves = new ArrayList<>();
+        Position current = position.offset(dr, dc);
+        int steps = 0;
+
+        while (current.isValid() && steps < MAX_SLIDE) {
+            if (isEmpty(current, board)) {
+                moves.add(current);
+            } else {
+                if (isEnemy(current, board)) moves.add(current);
+                break;
+            }
+            current = current.offset(dr, dc);
+            steps++;
+        }
+        return moves;
+    }
     /**
      * Calculates all legal movement destinations for the Dragon.
      * The Dragon slides continuously in all 8 directions until it reaches the edge of the board,
@@ -40,7 +57,7 @@ public class Dragon extends Piece implements Stabbable {
         List<Position> moves = new ArrayList<>();
         // Iterate through all 8 directions and use the inherited slide() method
         for (int[] dir : DIRS) {
-            moves.addAll(slide(dir[0], dir[1], board));
+            moves.addAll(slideLimited(dir[0], dir[1], board));
         }
         return moves;
     }

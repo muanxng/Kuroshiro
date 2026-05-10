@@ -45,12 +45,13 @@ public class Warrior extends Piece implements Stabbable {
         Position one = position.offset(dir, 0);
         if (one.isValid() && isEmpty(one, board)) {
             moves.add(one);
-
             // Forward two squares (only if it hasn't moved yet and the first square is also empty)
             if (!hasMoved) {
                 Position two = position.offset(dir * 2, 0);
                 if (isEmpty(two, board)) moves.add(two);
             }
+
+
         }
 
         // Diagonal captures

@@ -12,9 +12,9 @@ public class Mage extends Piece implements Shootable {
 
     /** The 8 adjacent directional offsets for standard movement. */
     private static final int[][] MOVE_DIRS = {
-            {-1,-1},{-1,0},{-1,1},
+                    {-1,0},
             { 0,-1},        { 0,1},
-            { 1,-1},{ 1,0},{ 1,1}
+                    { 1,0}
     };
 
     /** The 4 orthogonal directional offsets used for ranged shooting attacks. */
@@ -23,7 +23,7 @@ public class Mage extends Piece implements Shootable {
     };
 
     /** The maximum distance in squares the Mage can shoot. */
-    private static final int SHOOT_RANGE = 3;
+    private static final int SHOOT_RANGE = 2;
 
     /**
      * Initializes a new Mage piece.
@@ -47,8 +47,11 @@ public class Mage extends Piece implements Shootable {
     public List<Position> getLegalMoves(Board board) {
         List<Position> moves = new ArrayList<>();
         for (int[] dir : MOVE_DIRS) {
-            Position candidate = position.offset(dir[0], dir[1]);
-            if (candidate.isValid() && isEmpty(candidate, board)) moves.add(candidate);
+            for (int step = 1; step <= 2; step++) {
+                Position candidate = position.offset(dir[0] * step, dir[1] * step);
+                if (!candidate.isValid() || !isEmpty(candidate, board)) break;
+                moves.add(candidate);
+            }
         }
         return moves;
     }
