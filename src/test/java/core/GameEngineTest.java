@@ -110,4 +110,34 @@ public class GameEngineTest {
         assertTrue(result.isSuccess());
         assertEquals(Color.BLACK, engine.getCurrentTurn());
     }
+
+    /** Tests that a White Warrior triggers promotion upon reaching the top rank. */
+    @Test
+    void whiteWarriorPromotionTest() {
+        Warrior w = new Warrior(Color.WHITE, new Position(1, 4));
+        board.placePiece(w);
+
+        engine.makeMove(new Position(1, 4), new Position(0, 4));
+
+        assertTrue(engine.isPromotionPending());
+        engine.promote(new Mage(Color.WHITE, new Position(0, 4)));
+        assertTrue(board.getPieceAt(new Position(0, 4)) instanceof Mage);
+    }
+
+    /** Tests that a Black Warrior triggers promotion upon reaching the bottom rank. */
+    @Test
+    void blackWarriorPromotionTest() {
+        // Force turn skip for white to allow black to move
+        board.placePiece(new Warrior(Color.WHITE, new Position(6, 0)));
+        engine.makeMove(new Position(6, 0), new Position(5, 0));
+
+        Warrior bw = new Warrior(Color.BLACK, new Position(6, 4));
+        board.placePiece(bw);
+
+        engine.makeMove(new Position(6, 4), new Position(7, 4));
+
+        assertTrue(engine.isPromotionPending());
+        engine.promote(new Archer(Color.BLACK, new Position(7, 4)));
+        assertTrue(board.getPieceAt(new Position(7, 4)) instanceof Archer);
+    }
 }

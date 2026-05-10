@@ -100,4 +100,6 @@ public class WarriorTest {
         assertTrue(w.getLegalMoves(board).contains(new Position(2,3)));
         assertTrue(w.getLegalMoves(board).contains(new Position(3,3)));
     }
+
+
 }
