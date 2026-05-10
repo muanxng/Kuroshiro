@@ -10,7 +10,7 @@ import java.util.*;
  */
 public class Mage extends Piece implements Shootable {
 
-    /** The 8 adjacent directional offsets for standard movement. */
+    /** The 4 adjacent directional offsets for standard movement. */
     private static final int[][] MOVE_DIRS = {
                     {-1,0},
             { 0,-1},        { 0,1},

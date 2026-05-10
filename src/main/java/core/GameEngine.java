@@ -15,6 +15,10 @@ public class GameEngine {
     private boolean gameOver;
     private Color winner;
     private int totalMoves;
+    private java.util.function.Function<Color, Piece> promotionCallback;
+    private boolean promotionPending = false;
+    private core.Color promotionColor;
+    private Position promotionPosition;
 
     /**
      * Initializes a new GameEngine with the specified board.
@@ -49,6 +53,7 @@ public class GameEngine {
         if (!legalMoves.contains(to)) return MoveResult.failure(MoveResult.Status.INVALID_MOVE);
 
         Piece captured = board.movePiece(piece, to);
+        checkPromotion(piece);
 
         decrementCooldowns();
         totalMoves++;
@@ -87,6 +92,7 @@ public class GameEngine {
         }
 
         board.movePiece(piece, target);
+        checkPromotion(piece);
         decrementCooldowns();
         totalMoves++;
 
@@ -183,11 +189,13 @@ public class GameEngine {
      */
     private MoveResult finishTurn(Piece captured) {
         Color opponent = currentTurn.opposite();
-        if (board.getPieces(opponent).isEmpty()) {
-            gameOver = true;
-            winner = currentTurn;
+        if (!promotionPending) {
+            if (board.getPieces(opponent).isEmpty()) {
+                gameOver = true;
+                winner = currentTurn;
+            }
+            currentTurn = opponent;
         }
-        currentTurn = opponent;
         return MoveResult.success(captured, gameOver);
     }
 
@@ -199,5 +207,47 @@ public class GameEngine {
             if (p instanceof Archmage archmage)
                 archmage.decrementCooldown();
         }
+    }
+
+    private void checkPromotion(Piece piece) {
+        if (!(piece instanceof pieces.Warrior)) return;
+        int promotionRow = piece.getColor() == Color.WHITE ? 0 : 7;
+        if (piece.getPosition().getRow() != promotionRow) return;
+
+        // Don't remove yet — just flag as pending
+        promotionPending = true;
+        promotionColor = piece.getColor();
+        promotionPosition = piece.getPosition();
+    }
+
+    public boolean isPromotionPending() { return promotionPending; }
+    public Color getPromotionColor()    { return promotionColor; }
+    public Position getPromotionPosition() { return promotionPosition; }
+
+    public void promote(Piece promoted) {
+        // Remove the warrior now that player has chosen
+        board.removePiece(promotionPosition);
+        board.placePiece(promoted);
+        promotionPending = false;
+        promotionColor = null;
+        promotionPosition = null;
+
+        Color opponent = currentTurn.opposite();
+        if (board.getPieces(opponent).isEmpty()) {
+            gameOver = true;
+            winner = currentTurn;
+        }
+        currentTurn = opponent;
+    }
+
+    public void setPromotionCallback(java.util.function.Function<Color, Piece> callback) {
+        this.promotionCallback = callback;
+    }
+
+    private Piece createPromotedPiece(Piece choice, Color color, Position position) {
+        if (choice instanceof pieces.Mage)     return new pieces.Mage(color, position);
+        if (choice instanceof pieces.Assassin) return new pieces.Assassin(color, position);
+        if (choice instanceof pieces.Archer)   return new pieces.Archer(color, position);
+        return new pieces.Dragon(color, position); // default
     }
 }

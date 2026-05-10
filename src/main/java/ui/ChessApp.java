@@ -59,6 +59,7 @@ public class ChessApp extends Application {
     private List<Position> legalMoves;
     private List<Position> shootTargets;
 
+
     /**
      * The main entry point for the JavaFX application.
      * Initializes the game engine, sets up the UI layout, loads assets,
@@ -170,6 +171,23 @@ public class ChessApp extends Application {
                 }
             }
         }
+        try {
+            Image image = new Image(
+                    getClass().getResourceAsStream("/images/white_warrior_damaged.png")
+            );
+            pieceImages.put("white_warrior_damaged", image);
+        } catch (Exception ignored) {
+            System.out.println("Missing image: white_warrior_damaged");
+        }
+
+        try {
+            Image image = new Image(
+                    getClass().getResourceAsStream("/images/black_warrior_damaged.png")
+            );
+            pieceImages.put("black_warrior_damaged", image);
+        } catch (Exception ignored) {
+            System.out.println("Missing image: black_warrior_damaged");
+        }
     }
 
     /**
@@ -221,6 +239,9 @@ public class ChessApp extends Application {
 
                 drawCoordinates(g, row, col, x, y);
             }
+        }
+        if (engine.isPromotionPending()) {
+            drawPromotionOverlay(canvas.getGraphicsContext2D());
         }
     }
 
@@ -308,6 +329,11 @@ public class ChessApp extends Application {
         String name = piece.getClass().getSimpleName().toLowerCase();
         String key = color + "_" + name;
 
+        // Use damaged image if Warrior has 1 life
+        if (piece instanceof pieces.Warrior warrior && warrior.getLives() == 1) {
+            key = color + "_warrior_damaged";
+        }
+
         Image image = pieceImages.get(key);
 
         if (image != null) {
@@ -353,6 +379,54 @@ public class ChessApp extends Application {
         g.strokeText(symbol, x + TILE / 2.0 - 8, y + TILE / 2.0 + 8);
     }
 
+    private void drawPromotionOverlay(GraphicsContext g) {
+        // Dim the board
+        g.setFill(Color.rgb(0, 0, 0, 0.6));
+        g.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
+
+        // Draw promotion box
+        double boxWidth = TILE * 5;
+        double boxHeight = TILE * 2.5;
+        double boxX = (canvas.getWidth() - boxWidth) / 2;
+        double boxY = (canvas.getHeight() - boxHeight) / 2;
+
+        g.setFill(Color.rgb(50, 40, 30));
+        g.fillRoundRect(boxX, boxY, boxWidth, boxHeight, 20, 20);
+        g.setStroke(Color.rgb(200, 180, 120));
+        g.setLineWidth(2);
+        g.strokeRoundRect(boxX, boxY, boxWidth, boxHeight, 20, 20);
+
+        // Title
+        g.setFill(Color.WHITE);
+        g.setFont(Font.font("Arial", FontWeight.BOLD, TILE * 0.25));
+        g.fillText("Choose promotion:", boxX + TILE * 0.3, boxY + TILE * 0.5);
+
+        // Draw three piece choices
+        String[] choices = {"mage", "assassin", "archer"};
+        for (int i = 0; i < choices.length; i++) {
+            double pieceX = boxX + TILE * 0.5 + i * TILE * 1.5;
+            double pieceY = boxY + TILE * 0.7;
+
+            // Highlight box per piece
+            g.setFill(Color.rgb(255, 255, 255, 0.1));
+            g.fillRoundRect(pieceX, pieceY, TILE * 1.2, TILE * 1.2, 10, 10);
+
+            // Draw piece image or letter
+            String colorStr = engine.getPromotionColor() == core.Color.WHITE ? "white" : "black";
+            String key = colorStr + "_" + choices[i];
+            Image img = pieceImages.get(key);
+
+            if (img != null) {
+                g.drawImage(img, pieceX + 4, pieceY + 4, TILE * 1.2 - 8, TILE * 1.2 - 8);
+            } else {
+                g.setFill(Color.WHITE);
+                g.setFont(Font.font("Arial", FontWeight.BOLD, TILE * 0.5));
+                g.fillText(choices[i].substring(0, 1).toUpperCase(),
+                        pieceX + TILE * 0.35, pieceY + TILE * 0.85);
+            }
+        }
+    }
+
     /**
      * Handles mouse click events on the canvas, translating screen coordinates
      * to grid positions and managing piece selection or movement actions.
@@ -361,9 +435,13 @@ public class ChessApp extends Application {
      * @param row the clicked row index
      */
     private void handleClick(int col, int row) {
-        if (engine.isGameOver()) {
+        if (engine.isPromotionPending()) {
+            handlePromotionClick(col, row);
+            draw();
             return;
         }
+
+        if (engine.isGameOver()) return;
 
         Position clicked = new Position(row, col);
         Piece clickedPiece = engine.getBoard().getPieceAt(clicked);
@@ -385,6 +463,40 @@ public class ChessApp extends Application {
         }
 
         draw();
+    }
+
+    private void handlePromotionClick(int col, int row) {
+        double boxWidth = TILE * 5;
+        double boxHeight = TILE * 2.5;
+        double boxX = (canvas.getWidth() - boxWidth) / 2;
+        double boxY = (canvas.getHeight() - boxHeight) / 2;
+
+        double clickX = col * TILE + TILE / 2.0;
+        double clickY = row * TILE + TILE / 2.0;
+
+        String[] choices = {"mage", "assassin", "archer"};
+        for (int i = 0; i < choices.length; i++) {
+            double pieceX = boxX + TILE * 0.5 + i * TILE * 1.5;
+            double pieceY = boxY + TILE * 0.7;
+
+            if (clickX >= pieceX && clickX <= pieceX + TILE * 1.2
+                    && clickY >= pieceY && clickY <= pieceY + TILE * 1.2) {
+
+                core.Color color = engine.getPromotionColor();
+                Position pos = engine.getPromotionPosition();
+                Piece promoted;
+
+                switch (choices[i]) {
+                    case "assassin": promoted = new pieces.Assassin(color, pos); break;
+                    case "archer":   promoted = new pieces.Archer(color, pos); break;
+                    default:         promoted = new pieces.Mage(color, pos); break;
+                }
+
+                engine.promote(promoted);
+                statusLabel.setText(engine.getCurrentTurn() + "'s turn  |  Move: " + engine.getTotalMoves());
+                return;
+            }
+        }
     }
 
     /**
