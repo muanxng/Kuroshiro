@@ -17,6 +17,7 @@ class ui.ChessApp {
 - AudioClip moveSound
 - AudioClip gameOverSound
 - Button newGameButton
+- Button resignButton
 - GameEngine engine
 - Canvas canvas
 - Label statusLabel
@@ -34,8 +35,11 @@ class ui.ChessApp {
 - void drawCoordinates(GraphicsContext,int,int,double,double)
 - void drawPiece(GraphicsContext,Piece,double,double)
 - void drawFallbackPiece(GraphicsContext,Piece,double,double)
+- void drawPromotionOverlay(GraphicsContext)
 - void handleClick(int,int)
+- void handlePromotionClick(int,int)
 - void resetGame()
+- void resign()
 - void selectPiece(Position,Piece)
 - void clearSelection()
 - void updateStatus(MoveResult)

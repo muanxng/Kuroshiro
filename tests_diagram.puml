@@ -1,12 +1,87 @@
 @startuml
-class GameSetupTest {
+class util.GameSetupTest {
 ~ void whiteTest()
 ~ void blackTest()
 ~ void allWhitePiecesAreCorrectColor()
 ~ void allBlackPiecesAreCorrectColor()
 }
 
-class WarriorTest {
+class core.PositionTest {
+~ void validPositionsAreAccepted()
+~ void outOfBoundsAreInvalid()
+~ void offsetWorks()
+~ void equalityIsValueBased()
+~ void toStringIsChessNotation()
+}
+
+class pieces.MageTest {
+- Board board
+~ void setUp()
+~ void moveTest()
+~ void shootTest()
+~ void shootExceedTest()
+~ void shotBlockedByAllyPiece()
+~ void testShootWarrior()
+~ void pieceRemovedFromBoardTest()
+}
+
+
+class pieces.AssassinTest {
+- Board board
+~ void setUp()
+~ void moveTest()
+~ void jumpTest()
+~ void landingTest()
+~ void captureTest()
+}
+
+
+class pieces.ArcherTest {
+- Board board
+~ void setUp()
+~ void moveTest()
+~ void shootTest()
+~ void shootExceedTest()
+~ void shotBlockedTest()
+~ void shootAllyTest()
+~ void testShootWarrior()
+~ void pieceRemovedFromBoardTest()
+}
+
+
+class core.GameEngineTest {
+- Board board
+- GameEngine engine
+~ void setUp()
+~ void whiteFirstTest()
+~ void alternatingTurnTest()
+~ void opponentPieceTest()
+~ void returnedCapturedPieceTest()
+~ void gameEndTest()
+~ void totalMovesTest()
+~ void mageShootTest()
+~ void archmageShootTest()
+~ void archerShootTest()
+~ void whitePromotionTest()
+~ void blackPromotionTest()
+}
+
+
+class pieces.ArchmageTest {
+- Board board
+~ void setUp()
+~ void moveTest()
+~ void shootTest()
+~ void shotBlockedTest()
+~ void cooldownTest()
+~ void cooldownCountTest()
+~ void downtimeTest()
+~ void testShootWarrior()
+~ void pieceRemovedFromBoardTest()
+}
+
+
+class pieces.WarriorTest {
 - Board board
 ~ void setUp()
 ~ void startsWithTwoLives()
@@ -21,87 +96,12 @@ class WarriorTest {
 }
 
 
-class AssassinTest {
+class pieces.DragonTest {
 - Board board
 ~ void setUp()
 ~ void moveTest()
-~ void moveExceedTest()
-~ void jumpTest()
-~ void landingTest()
-~ void captureTest()
-}
-
-
-class DragonTest {
-- Board board
-~ void setUp()
-~ void moveStraightTest()
-~ void moveDiagonalTest()
 ~ void blockedTest()
 ~ void captureTest()
-}
-
-
-class MageTest {
-- Board board
-~ void setUp()
-~ void movesOneSquareInAnyDirection()
-~ void shootsStraightUpTo4Tiles()
-~ void cannotShootBeyond4Tiles()
-~ void shotBlockedByAllyPiece()
-~ void testShootWarrior()
-~ void pieceRemovedFromBoardTest()
-}
-
-
-class ArcherTest {
-- Board board
-~ void setUp()
-~ void moveTest()
-~ void shootTest()
-~ void shootExceedTest()
-~ void shotBlockedTest()
-~ void shootAllyTest()
-~ void testShootWarrior()
-~ void pieceRemovedFromBoardTest()
-}
-
-
-class GameEngineTest {
-- Board board
-- GameEngine engine
-~ void setUp()
-~ void whiteFirstTest()
-~ void alternatingTurnTest()
-~ void opponentPieceTest()
-~ void returnedCapturedPieceTest()
-~ void gameEndTest()
-~ void totalMovesTest()
-~ void mageShootTest()
-~ void archmageShootTest()
-~ void archerShootTest()
-}
-
-
-class PositionTest {
-~ void validPositionsAreAccepted()
-~ void outOfBoundsAreInvalid()
-~ void offsetWorks()
-~ void equalityIsValueBased()
-~ void toStringIsChessNotation()
-}
-
-class ArchmageTest {
-- Board board
-~ void setUp()
-~ void moveTest()
-~ void shootTest()
-~ void shotBlockedTest()
-~ void cooldownTest()
-~ void cooldownCountTest()
-~ void downtimeTest()
-~ void testShootWarrior()
-~ void pieceRemovedFromBoardTest()
 }
 
 
