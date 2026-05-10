@@ -43,14 +43,16 @@ public class GameSetup {
         int pawnRow = (color == Color.WHITE) ? backRow - 1 : backRow + 1;
 
         // Place the back-row specialized units
-        board.placePiece(new Archer(color,   new Position(backRow, 0)));
-        board.placePiece(new Mage(color,     new Position(backRow, 1)));
-        board.placePiece(new Assassin(color, new Position(backRow, 2)));
+        board.placePiece(new Assassin(color, new Position(backRow, 0)));
+        board.placePiece(new Archer(color,   new Position(backRow, 1)));
+        board.placePiece(new Mage(color,     new Position(backRow, 2)));
         board.placePiece(new Dragon(color,   new Position(backRow, 3)));
         board.placePiece(new Archmage(color, new Position(backRow, 4)));
-        board.placePiece(new Assassin(color, new Position(backRow, 5)));
-        board.placePiece(new Mage(color,     new Position(backRow, 6)));
-        board.placePiece(new Archer(color,   new Position(backRow, 7)));
+        board.placePiece(new Mage(color,     new Position(backRow, 5)));
+        board.placePiece(new Archer(color,   new Position(backRow, 6)));
+        board.placePiece(new Assassin(color, new Position(backRow, 7)));
+
+
 
         // Place the frontline of 8 Warriors
         for (int col = 0; col < 8; col++) {
