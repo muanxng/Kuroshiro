@@ -6,43 +6,36 @@ enum core.Color {
 }
 
 
-class core.Position {
-- int row
-- int col
-+ <<Create>> Position(int,int)
-+ int getRow()
-+ int getCol()
-+ boolean isValid()
-+ Position offset(int,int)
-+ boolean equals(Object)
-+ int hashCode()
-+ String toString()
+interface core.Moveable {
+~ List<Position> getLegalMoves(Board)
+~ String getSymbol()
 }
 
+class core.MoveResult {
+- Status status
+- Piece capturedPiece
+- boolean isWon
+- <<Create>> MoveResult(Status,Piece,boolean)
++ {static} MoveResult success(Piece,boolean)
++ {static} MoveResult failure(Status)
++ Status getStatus()
++ Piece getCapturedPiece()
++ boolean isSuccess()
++ boolean isWon()
+}
+
+
+enum core.Status {
++  SUCCESS
++  INVALID_MOVE
++  NO_PIECE_SELECTED
++  WRONG_TURN
++  GAME_OVER
+}
 
 interface core.Stabbable {
 ~ Piece stab(Position,Board)
 }
-
-abstract class core.Piece {
-# Color color
-# Position position
-# boolean hasMoved
-+ <<Create>> Piece(Color,Position)
-+ Color getColor()
-+ Position getPosition()
-+ boolean hasMoved()
-+ void setPosition(Position)
-# boolean canMoveTo(Position,Board)
-# boolean isEnemy(Position,Board)
-# boolean isEmpty(Position,Board)
-# List<Position> slide(int,int,Board)
-+ void resetHasMoved(boolean)
-+ {abstract}List<Position> getLegalMoves(Board)
-+ {abstract}String getSymbol()
-+ String toString()
-}
-
 
 class core.GameEngine {
 - Board board
@@ -74,9 +67,26 @@ class core.GameEngine {
 }
 
 
-interface core.Moveable {
-~ List<Position> getLegalMoves(Board)
-~ String getSymbol()
+abstract class core.Piece {
+# Color color
+# Position position
+# boolean hasMoved
++ <<Create>> Piece(Color,Position)
++ Color getColor()
++ Position getPosition()
++ void setPosition(Position)
+# boolean canMoveTo(Position,Board)
+# boolean isEnemy(Position,Board)
+# boolean isEmpty(Position,Board)
++ {abstract}List<Position> getLegalMoves(Board)
++ {abstract}String getSymbol()
++ String toString()
+}
+
+
+interface core.Shootable {
+~ Piece shoot(Position,Board)
+~ List<Position> getTargets(Board)
 }
 
 class core.Board {
@@ -91,32 +101,19 @@ class core.Board {
 }
 
 
-interface core.Shootable {
-~ Piece shoot(Position,Board)
-~ List<Position> getTargets(Board)
+class core.Position {
+- int row
+- int col
++ <<Create>> Position(int,int)
++ int getRow()
++ int getCol()
++ boolean isValid()
++ Position offset(int,int)
++ boolean equals(Object)
++ int hashCode()
++ String toString()
 }
 
-class core.MoveResult {
-- Status status
-- Piece capturedPiece
-- boolean isWon
-- <<Create>> MoveResult(Status,Piece,boolean)
-+ {static} MoveResult success(Piece,boolean)
-+ {static} MoveResult failure(Status)
-+ Status getStatus()
-+ Piece getCapturedPiece()
-+ boolean isSuccess()
-+ boolean isWon()
-}
-
-
-enum core.Status {
-+  SUCCESS
-+  INVALID_MOVE
-+  NO_PIECE_SELECTED
-+  WRONG_TURN
-+  GAME_OVER
-}
 
 
 

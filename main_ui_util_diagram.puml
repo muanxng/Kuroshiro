@@ -1,7 +1,6 @@
 @startuml
-class util.GameSetup {
-+ {static} Board createStandardBoard()
-- {static} void setupPieces(Board,Color,int)
+class main.Main {
++ {static} void main(String[])
 }
 
 class ui.ChessApp {
@@ -50,8 +49,9 @@ class ui.ChessApp {
 }
 
 
-class main.Main {
-+ {static} void main(String[])
+class util.GameSetup {
++ {static} Board createStandardBoard()
+- {static} void setupPieces(Board,Color,int)
 }
 
 

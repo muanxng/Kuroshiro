@@ -51,13 +51,6 @@ public abstract class Piece implements Moveable {
     public Position getPosition() { return position; }
 
     /**
-     * Checks whether this piece has been moved from its original starting position.
-     *
-     * @return {@code true} if the piece has moved at least once, {@code false} otherwise
-     */
-    public boolean hasMoved() { return hasMoved; }
-
-    /**
      * Updates the piece's coordinate and permanently flags it as having moved.
      *
      * @param position the new {@link Position} to assign to the piece
@@ -103,41 +96,6 @@ public abstract class Piece implements Moveable {
      */
     protected boolean isEmpty(Position pos, Board board) {
         return pos.isValid() && board.getPieceAt(pos) == null;
-    }
-
-    /**
-     * Calculates a trajectory of valid moves by sliding continuously in a specified vector.
-     * The slide terminates when it encounters the board's edge, a friendly piece,
-     * or after capturing an enemy piece.
-     *
-     * @param dr the row direction offset (e.g., -1 for "up", 1 for "down")
-     * @param dc the column direction offset (e.g., -1 for "left", 1 for "right")
-     * @param board the current {@link Board} state
-     * @return a list of all valid {@link Position}s along the sliding path
-     */
-    protected List<Position> slide(int dr, int dc, Board board) {
-        List<Position> moves = new ArrayList<>();
-        Position current = position.offset(dr, dc);
-        while (current.isValid()) {
-            if (isEmpty(current, board)) {
-                moves.add(current);
-            } else {
-                if (isEnemy(current, board)) moves.add(current);
-                break;
-            }
-            current = current.offset(dr, dc);
-        }
-        return moves;
-    }
-
-    /**
-     * Manually overrides the movement status flag of the piece.
-     * This is particularly useful for engine rollbacks, undoing moves, or specific game resets.
-     *
-     * @param value {@code true} to flag as moved, {@code false} to flag as unmoved
-     */
-    public void resetHasMoved(boolean value) {
-        this.hasMoved = value;
     }
 
     @Override

@@ -42,7 +42,7 @@ public class ChessApp extends Application {
     private static final Color DARK = Color.rgb(176, 196, 210);
     private static final Color SELECT = Color.rgb(255, 255, 0, 0.6);
     private static final Color MOVE_HIGHLIGHT = Color.rgb(50, 200, 50, 0.5);
-    private static final Color SHOOT_HIGHLIGHT = Color.rgb(255, 140, 0, 0.6);
+    private static final Color COMBAT_HIGHLIGHT = Color.rgb(255, 140, 0, 0.6);
 
     /** In-memory cache for loaded piece sprites to prevent disk reloading. */
     private final Map<String, Image> pieceImages = new HashMap<>();
@@ -304,7 +304,7 @@ public class ChessApp extends Application {
         }
 
         if (shootTargets != null && shootTargets.contains(position)) {
-            g.setFill(SHOOT_HIGHLIGHT);
+            g.setFill(COMBAT_HIGHLIGHT);
             g.fillRect(x, y, TILE, TILE);
         }
 

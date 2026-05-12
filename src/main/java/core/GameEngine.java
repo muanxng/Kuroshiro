@@ -56,7 +56,6 @@ public class GameEngine {
 
         Piece captured = board.movePiece(piece, to);
         checkPromotion(piece);
-
         decrementCooldowns();
         totalMoves++;
 
@@ -67,31 +66,22 @@ public class GameEngine {
      * Executes a melee action if the acting piece implements {@link Stabbable}.
      * A successful stab instantly captures the target and moves the attacker to the target's square.
      *
-     * @param shooterPos the current coordinate of the attacking piece
+     * @param stabberPos the current coordinate of the attacking piece
      * @param target the coordinate of the enemy to stab
      * @return a {@link MoveResult} detailing the success or failure of the stab action
      */
-    public MoveResult stab(Position shooterPos, Position target) {
+    public MoveResult stab(Position stabberPos, Position target) {
 
-        if (gameOver) {
-            return MoveResult.failure(MoveResult.Status.GAME_OVER);
-        }
+        if (gameOver) return MoveResult.failure(MoveResult.Status.GAME_OVER);
 
-        Piece piece = board.getPieceAt(shooterPos);
+        Piece piece = board.getPieceAt(stabberPos);
 
-        if (!(piece instanceof Stabbable stabbable)) {
-            return MoveResult.failure(MoveResult.Status.NO_PIECE_SELECTED);
-        }
-
-        if (piece.getColor() != currentTurn) {
-            return MoveResult.failure(MoveResult.Status.WRONG_TURN);
-        }
+        if (!(piece instanceof Stabbable stabbable)) return MoveResult.failure(MoveResult.Status.NO_PIECE_SELECTED);
+        if (piece.getColor() != currentTurn) return MoveResult.failure(MoveResult.Status.WRONG_TURN);
 
         Piece captured = stabbable.stab(target, board);
 
-        if (captured == null) {
-            return MoveResult.failure(MoveResult.Status.INVALID_MOVE);
-        }
+        if (captured == null) return MoveResult.failure(MoveResult.Status.INVALID_MOVE);
 
         board.movePiece(piece, target);
         checkPromotion(piece);
@@ -112,29 +102,19 @@ public class GameEngine {
      */
     public MoveResult shoot(Position shooterPos, Position target) {
 
-        if (gameOver) {
-            return MoveResult.failure(MoveResult.Status.GAME_OVER);
-        }
+        if (gameOver) return MoveResult.failure(MoveResult.Status.GAME_OVER);
 
         Piece piece = board.getPieceAt(shooterPos);
 
-        if (!(piece instanceof Shootable shootable)) {
-            return MoveResult.failure(MoveResult.Status.NO_PIECE_SELECTED);
-        }
-
-        if (piece.getColor() != currentTurn) {
-            return MoveResult.failure(MoveResult.Status.WRONG_TURN);
-        }
+        if (!(piece instanceof Shootable shootable)) return MoveResult.failure(MoveResult.Status.NO_PIECE_SELECTED);
+        if (piece.getColor() != currentTurn) return MoveResult.failure(MoveResult.Status.WRONG_TURN);
 
         Piece captured = shootable.shoot(target, board);
 
-        if (captured == null) {
-            return MoveResult.failure(MoveResult.Status.INVALID_MOVE);
-        }
+        if (captured == null) return MoveResult.failure(MoveResult.Status.INVALID_MOVE);
 
         decrementCooldowns();
         totalMoves++;
-
         return finishTurn(captured);
     }
 
